@@ -5,35 +5,41 @@ import 'mapbox-echarts'
 import * as maptalks from 'maptalks'
 import { Select,Checkbox } from 'antd';
 import PropTypes from 'prop-types';
+import axios from 'axios';
 
 const { Option } = Select;
 
-var test_data = [{
-    name:'aa',
-    coords: [[100.5971, 13.8989, 700], [100.5837, 13.8755, 1700], [100.5572, 13.8620, 2400]],
-    date:'2022-10-04',
-    time_1:'17:23:06',
-    time_2:'17:24:10',
-    week:'1'
-},{
-    name:'aa',
-    coords: [[100.5971, 13.8989, 700], [100.5837, 13.8755, 1000], [100.5572, 13.8620, 2000]],
-    date:'2022-10-04',
-    time_1:'17:23:06',
-    time_2:'17:24:10',
-    week:'1'
-}]
+// var test_data = [{
+//     name:'aa',
+//     coords: [[100.5971, 13.8989, 700], [100.5837, 13.8755, 1700], [100.5572, 13.8620, 2400]],
+//     date:'2022-10-04',
+//     time_1:'17:23:06',
+//     time_2:'17:24:10',
+//     week:'1'
+// },{
+//     name:'aa',
+//     coords: [[100.5971, 13.8989, 700], [100.5837, 13.8755, 1000], [100.5572, 13.8620, 2000]],
+//     date:'2022-10-04',
+//     time_1:'17:23:06',
+//     time_2:'17:24:10',
+//     week:'1'
+// }]
+
+var test_data = []
 
 var map = {
     center: [100.6042,13.9133], 
-    zoom: 13.5,
-    altitudeScale: 1,
+    zoom: 13,
+    altitudeScale: 100,
     baseLayer: new maptalks.TileLayer('base', {
         urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
         subdomains: ['a','b','c','d'],
         attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
     }),
 }
+
+const url = 'http://localhost:8000/';
+
 
 class Map extends React.Component {
     constructor(props) {
@@ -55,6 +61,14 @@ class Map extends React.Component {
         if(this.what === "Flight no"){
             this.getData(this.flight)
         }
+        axios.get(url+'get_flight').then((response) => {
+            console.log(response.data);
+            test_data.push(response.data);
+            this.getData(test_data)
+          })
+          .catch((error) => {
+            console.log(error)
+          });
 
     }
 
@@ -89,7 +103,7 @@ class Map extends React.Component {
                 type: 'scatter3D',
                 coordinateSystem: 'maptalks3D',
                 itemStyle: {
-                    color: 'rgb(50, 50, 150)',
+                    color: '(255, 0, 0)',
                     opacity: 1
                 },
                 data: this.state.scatter,
@@ -106,7 +120,7 @@ class Map extends React.Component {
                 type: 'lines3D',
                 coordinateSystem: 'maptalks3D',
                 effect: {
-                    show: true,
+                    show: false,
                     constantSpeed: 40,
                     trailWidth: 2,
                     trailLength: 0.05,
