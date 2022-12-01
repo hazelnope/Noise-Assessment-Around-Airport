@@ -6,6 +6,8 @@ import * as maptalks from 'maptalks'
 import { Select,Checkbox } from 'antd';
 import PropTypes from 'prop-types';
 import axios from 'axios';
+import { BsFillHandThumbs } from "react-icons/bs";
+
 
 const { Option } = Select;
 
@@ -27,10 +29,15 @@ const { Option } = Select;
 
 var test_data = []
 
+var test_scatter = [[100.5971, 13.8989, 15, "Hello World"]]
+// var test_scatter = [[100.5971, 13.8989, 15, ▄]]
+
 var map = {
     center: [100.6042,13.9133], 
     zoom: 13,
     altitudeScale: 100,
+    pitch: 45,
+    bearing: 15,
     baseLayer: new maptalks.TileLayer('base', {
         urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
         subdomains: ['a','b','c','d'],
@@ -48,7 +55,7 @@ class Map extends React.Component {
             data : test_data,
             checkedList: [],
             list: [],
-            scatter: []
+            scatter: test_scatter
         };
         this.flight = props.data
         this.check = props.name
