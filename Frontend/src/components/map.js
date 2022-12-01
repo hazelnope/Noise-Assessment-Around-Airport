@@ -47,7 +47,6 @@ var map = {
 
 const url = 'http://localhost:8000/';
 
-
 class Map extends React.Component {
     constructor(props) {
         super(props);
