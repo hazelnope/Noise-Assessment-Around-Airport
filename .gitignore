@@ -24,3 +24,6 @@ yarn-error.log*
 
 # add cache
 /Backend/__pycache__
+/Backend/key_value/__pycache__
+/Backend/.ipynb_checkpoints
+/Preprocess/.ipynb_checkpoints
