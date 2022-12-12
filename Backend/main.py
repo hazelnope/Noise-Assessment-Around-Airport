@@ -10,6 +10,8 @@ from firebase_admin import firestore
 import json
 import time
 from key_value.token import apiKey, apiUrl, auth_header
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 app = FastAPI()
 
@@ -75,10 +77,12 @@ def get_flightaware(item:date_flight):
     for i in response.json()['arrivals']:
         if 'schedule' in i['fa_flight_id']:
             Arrivals_FlightID.append(i['fa_flight_id'])
+            # break
         
     for i in response.json()['departures']:
         if 'schedule' in i['fa_flight_id']:
             Departures_FlightID.append(i['fa_flight_id'])
+            # break
         
     #----- get data from flight ID -----#
     Dict_departures_flights = {
@@ -103,35 +107,51 @@ def get_flightaware(item:date_flight):
             #----- check time -----#
             tmp_df = tmp_df.drop_duplicates(subset=['timestamp'], keep='first')
             
-            #----- altitude <= 100k ft. -----#
+            #----- altitude <= 100k ft. & index[1]-index[0]==1 -----#
             tmp_df = tmp_df[tmp_df['altitude']<=100]
+            tmp_df['check_index_1'] = tmp_df.index
+            tmp_df['check_index_2'] = tmp_df['check_index_1'].shift(-1)
+            tmp_df['drop'] = tmp_df['check_index_2']-tmp_df['check_index_1'] == 1
+            
+            #----- loop append only Departures -----#
+            res = pd.DataFrame()
+            n = 0
+            while(tmp_df.iloc[n]['drop']) :
+                res = res.append(tmp_df.iloc[n])
+                # res = pd.concat([res, tmp_df.iloc[n]])
+                n+=1
+            res = res.append(tmp_df.iloc[n])
+            # res = pd.concat([res, tmp_df.iloc[n]])
             
             #----- interpolate 1 sec -----#
-            tmp_df['timestamp'] = pd.to_datetime(tmp_df.timestamp)
-            nidx = np.arange(tmp_df['timestamp'][0], tmp_df['timestamp'].iloc[-1], 1000000 )
+            res['timestamp'] = pd.to_datetime(res.timestamp)
+            nidx = np.arange(res['timestamp'][0], res['timestamp'].iloc[-1], 1000000 )
             nidx = pd.to_datetime(nidx)
 
-            tmp_df['timestamp'] = tmp_df['timestamp'].round('S').dt.tz_localize(None)
-            tmp_df.set_index('timestamp', inplace=True)
-            tmp_df = tmp_df.reindex(tmp_df.index.union(nidx))
+            res['timestamp'] = res['timestamp'].round('S').dt.tz_localize(None)
+            res.set_index('timestamp', inplace=True)
+            res = res.reindex(res.index.union(nidx))
 
             #----- interpolate ['altitude', 'groundspeed', 'heading', 'latitude', 'longitude'] -----#
-            tmp_df = tmp_df[['fa_flight_id', 'altitude', 'groundspeed', 'heading', 'latitude', 'longitude']]
-            tmp_df['altitude'] = pd.to_numeric(tmp_df['altitude'])
-            tmp_df['groundspeed'] = pd.to_numeric(tmp_df['groundspeed'])
-            tmp_df['heading'] = pd.to_numeric(tmp_df['heading'])
-            tmp_df = tmp_df.interpolate(method='time',limit_direction='both',limit=100)
-            tmp_df['fa_flight_id'] = id
+            res = res[['fa_flight_id', 'altitude', 'groundspeed', 'heading', 'latitude', 'longitude']]
+            res['altitude'] = pd.to_numeric(res['altitude'])
+            res['groundspeed'] = pd.to_numeric(res['groundspeed'])
+            res['heading'] = pd.to_numeric(res['heading'])
+            res = res.interpolate(method='time',limit_direction='both',limit=100)
+            res['fa_flight_id'] = id
+            
+            #----- ONLY TEST -----#
+            # res.to_csv(f'../Preprocess/ONLY_TEST/{id}.csv')
             
             #----- check day/night -----#
-            if tmp_df.iloc[:1].between_time('23:00', '07:00').empty :
-                # print('night')
-                Dict_departures_flights['night'][id] = tmp_df.copy()
+            if res.iloc[:1].between_time('07:00', '23:00').empty :
+                print(id,' night ', res.iloc[0])
+                Dict_departures_flights['night'][id] = res.copy()
                 Dict_departures_flights['night'][id].reset_index(inplace=True)
                 Dict_departures_flights['night'][id].rename(columns={'index':'timestamp'},inplace=True)
             else :
-                # print('day')
-                Dict_departures_flights['day'][id] = tmp_df.copy()
+                print(id,' day ', res.iloc[0])
+                Dict_departures_flights['day'][id] = res.copy()
                 Dict_departures_flights['day'][id].reset_index(inplace=True)
                 Dict_departures_flights['day'][id].rename(columns={'index':'timestamp'},inplace=True)
                 
@@ -139,13 +159,18 @@ def get_flightaware(item:date_flight):
             print("Error executing request")
             
         # i+=1
-        time.sleep(7)
+        time.sleep(10)
+        
+        
 
     for day_night in Dict_departures_flights:
         for flight in Dict_departures_flights[day_night]:
             # print(day_night, flight)
             postdata = Dict_departures_flights[day_night][flight]
-            doc_ref = db.collection(f'{start}').document(f'{day_night}').collection(f'{flight}')
+            date_index = postdata.iloc[0].timestamp.date()
+
+            # doc_ref = db.collection(f'{start}').document(f'{day_night}').collection(f'{flight}')
+            doc_ref = db.collection(f'{date_index}').document(f'{day_night}').collection(f'{flight}')
             print('docref success')
             postdata = postdata.to_dict('records')
             list(map(lambda x: doc_ref.add(x), postdata))

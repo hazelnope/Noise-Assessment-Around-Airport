@@ -23,9 +23,9 @@ doc_ref = db.collection(u'dd-mm-yy').document(u'Day').collection(u'flight_ID')
 
 
 
-df = pd.read_csv('Preprocess/data/Sample_data3.csv')
-postdata = df.to_dict('records')
-list(map(lambda x: doc_ref.add(x), postdata))
+# df = pd.read_csv('Preprocess/data/Sample_data3.csv')
+# postdata = df.to_dict('records')
+# list(map(lambda x: doc_ref.add(x), postdata))
 # print(postdata)
 # doc_ref.push(postdata)
 
@@ -44,3 +44,19 @@ list(map(lambda x: doc_ref.add(x), postdata))
 
 
 
+import time
+
+start = time.time()
+
+# users_ref = db.collection("/test/eKJpCK7IgpSI7x90Ky3C/test2")
+users_ref = db.collection("2022-12-09").document("day").collection('AIQ359-1670457540-schedule-0563')
+# users_ref = db.collection("test").document("eKJpCK7IgpSI7x90Ky3C").collection('test2')
+
+docs = list (users_ref.get())
+# print(docs)
+flight_dict = list(map(lambda x: x.to_dict(), docs))
+df = pd.DataFrame(flight_dict)
+end = time.time()
+
+print(df)
+print('end time => ',end - start)
