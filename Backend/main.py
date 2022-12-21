@@ -10,6 +10,10 @@ from firebase_admin import firestore
 import json
 import time
 from key_value.token import apiKey, apiUrl, auth_header
+from typing import Union
+import datetime
+import os
+import glob
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -19,6 +23,12 @@ app = FastAPI()
 class date_flight(BaseModel):
     start: str
     end: str
+
+class api_flightID(BaseModel):
+    flight_id:Union[str, None] = None
+    date:str
+    period:Union[str, None] = None
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -34,6 +44,24 @@ cred = credentials.Certificate('serviceAccount.json')
 app_firebase = firebase_admin.initialize_app(cred)
 db = firestore.client()
 # doc_ref = db.collection(u'dd-mm-yy').document(u'Day').collection(u'flight_ID')
+
+def validate(date_text):
+        try:
+            # print(date_text)
+            test = datetime.datetime.strptime(date_text, '%Y-%m-%d %H:%M:%S')
+            # print(test.timestamp())
+            return 0, test.timestamp()
+            # year, month, day = date_text.split('-')
+
+            # if len(day) == 1:
+            #     day = f'0{day}'
+            # if len(month) == 1:
+            #     month = f'0{month}'
+            # return 0, f'{year}-{month}-{day}'
+        except ValueError:
+            # raise ValueError("Incorrect data format, should be YYYY-MM-DD")
+            return 1 ,"Incorrect data format, should be YYYY-MM-DD H:M:S"
+
 
 
 @app.get("/")
@@ -179,6 +207,57 @@ def get_flightaware(item:date_flight):
     return {"response": f'Insert successful','status_code':200}
 
 
+@app.post('/get_flight')
+def get_flight(item:api_flightID):
+
+    date_check, param_date = validate(item.date)
+    if date_check:
+        return {'response': param_date}
+    period = None
+    if item.period in ['day','night']:
+        period = item.period
+    # print(param_date+3600)
+    doc_ref = db.collection('filter_flight').where('period','==',period).where('date','==',param_date)
+    docs = list(doc_ref.stream())
+    flight_dict = list(map(lambda x: x.to_dict(), docs))
+    df = pd.DataFrame(flight_dict)
+    print(df)
+
+    # print(type(param_date))
+    return {'flight_id':f'{param_date} {item.period} {item.flight_id}'}
+
+
+@app.get('/csv_2_db')
+def csv_2_db():
+    path = '../Preprocess/ONLY_TEST/'
+    csv_files = glob.glob(os.path.join(path, "*.csv"))
+    for f in csv_files:
+        # print(f)
+        df = pd.read_csv(f)
+        df['timestamp'] = pd.to_datetime(df.timestamp)
+        date_index = df.iloc[0].timestamp.date()
+        if df.set_index('timestamp').iloc[:1].between_time('07:00', '23:00').empty :
+            period = 'night'
+        else: period = 'day'
+        id = df.iloc[0].fa_flight_id
+        # print(date_index, period, id)
+        doc_ref = db.collection(f'filter_flight')
+        # doc_ref2 = db.collection(f'detail_and_grid').document(u'detail').collection(f'{id}')
+        # print(df.iloc[0].timestamp ,df.iloc[0].timestamp.floor(freq='H').strftime("%s"), int(df.iloc[0].timestamp.floor(freq='H').strftime("%s"))+3600)
+        doc_ref.add({
+            # 'date':f'{date_index}',
+            # 'date': int(date_index.strftime("%s")),
+            'date': int(df.iloc[0].timestamp.floor(freq='H').strftime("%s")),
+            # 'date':time.mktime(datetime.datetime.strptime(date_index, '%Y-%m-%d').timetuple()),
+            # 'date':date_index.datetime.timestamp(),
+            'id':id,
+            'period':period
+        })
+        # postdata = df.to_dict('records')
+        # list(map(lambda x: doc_ref2.add(x), postdata))
+    return {'response':'success'}
+
+
 @app.get('/test_firebase')
 def firebase():
     doc_ref = db.collection(f'dd-mm-yy').document(u'Day').collection(u'flight_ID')
@@ -189,6 +268,6 @@ def firebase():
     return {'status':'good'}
 
 
-# col_list = df_sample_data[['long','lat','altitude_ft']].values.tolist()
+
 # uvicorn main:app --reload
 # python -m uvicorn main:app --reload
