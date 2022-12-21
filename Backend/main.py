@@ -217,14 +217,44 @@ def get_flight(item:api_flightID):
     if item.period in ['day','night']:
         period = item.period
     # print(param_date+3600)
-    doc_ref = db.collection('filter_flight').where('period','==',period).where('date','==',param_date)
+    doc_ref = db.collection('filter_flight').where('period','==',period).where('date','==',param_date).limit(3)
     docs = list(doc_ref.stream())
     flight_dict = list(map(lambda x: x.to_dict(), docs))
-    df = pd.DataFrame(flight_dict)
-    print(df)
+    # df = pd.DataFrame(flight_dict)
+    # print(df)
+    # print(flight_dict)
 
-    # print(type(param_date))
-    return {'flight_id':f'{param_date} {item.period} {item.flight_id}'}
+    if item.flight_id:
+        doc_ref2 = db.collection('detail_and_grid').document('detail').collection(f'{item.flight_id}').order_by('timestamp')
+        docs = list(doc_ref2.stream())
+        flight_dict = list(map(lambda x: x.to_dict(), docs))
+        df = pd.DataFrame(flight_dict)
+        # print(df)
+        # print()
+    else:
+        res_list = []
+        for doc in flight_dict:
+            # print(doc['id'])
+            id = doc['id']
+            doc_ref2 = db.collection('detail_and_grid').document('detail').collection(f'{id}').order_by('timestamp')
+            docs = list(doc_ref2.stream())
+            flight_dict = list(map(lambda x: x.to_dict(), docs))
+            df = pd.DataFrame(flight_dict)
+            df = df[['longitude','latitude','altitude']].values.tolist()
+            # print(df)
+            tmp_dict ={
+                'id':id,
+                'value':df
+            }
+            res_list.append(tmp_dict)
+            # print()
+            # break
+    # print(res_list)
+
+
+
+
+    return {'response':'success','res':res_list}
 
 
 @app.get('/csv_2_db')

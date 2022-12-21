@@ -1,3 +1,4 @@
+sep=;
 ACFT_ID;Description;Engine Type;Number Of Engines;Weight Class;Owner Category;Max Gross Takeoff Weight (lb);Max Gross Landing Weight (lb);Max Landing Distance (ft);Max Sea Level Static Thrust (lb);Noise Chapter;NPD_ID;Power Parameter;Approach Spectral Class ID;Departure Spectral Class ID;Lateral Directivity Identifier
 1900D;Beech 1900D / PT6A67;Turboprop;2;Large;Commercial;16950;14940;1696;3367;1;PT6A67;CNT (lb);213;109;Prop
 707;Boeing 707-120 / JT3C;Jet;4;Heavy;Commercial;302400;188900;6682;10120;1;JT4A;CNT (lb);208;107;Wing
