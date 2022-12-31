@@ -49,7 +49,7 @@ def validate(date_text):
         try:
             # print(date_text)
             test = datetime.datetime.strptime(date_text, '%Y-%m-%d %H:%M:%S')
-            # print(test.timestamp())
+            print(test.timestamp())
             return 0, test.timestamp()
             # year, month, day = date_text.split('-')
 
@@ -217,7 +217,8 @@ def get_flight(item:api_flightID):
     if item.period in ['day','night']:
         period = item.period
     # print(param_date+3600)
-    doc_ref = db.collection('filter_flight').where('period','==',period).where('date','==',param_date).limit(3)
+    # doc_ref = db.collection('filter_flight').where('period','==',period).where('date','==',param_date).limit(3)
+    doc_ref = db.collection('filter_flight').where('date','>=',param_date).where('date','<',param_date+10800).limit(3)
     docs = list(doc_ref.stream())
     flight_dict = list(map(lambda x: x.to_dict(), docs))
     # df = pd.DataFrame(flight_dict)
@@ -249,7 +250,7 @@ def get_flight(item:api_flightID):
             res_list.append(tmp_dict)
             # print()
             # break
-    # print(res_list)
+    print(res_list)
 
 
 
@@ -266,23 +267,48 @@ def csv_2_db():
         df = pd.read_csv(f)
         df['timestamp'] = pd.to_datetime(df.timestamp)
         date_index = df.iloc[0].timestamp.date()
-        if df.set_index('timestamp').iloc[:1].between_time('07:00', '23:00').empty :
+        if df.set_index('timestamp').iloc[:1].between_time('00:00', '16:00').empty :
             period = 'night'
         else: period = 'day'
         id = df.iloc[0].fa_flight_id
+        # print(id, period, date_index)
+
+        check_docs = db.collection('filter_flight').where('id','==',f'{id}')
+        check_exist = check_docs.get()
+        # print(check_exist)
+        if check_exist != []:
+            continue
+        else:
+            print('not found', id)
+            # print(int(df.iloc[0].timestamp.floor(freq='H').timestamp()))
+            doc_ref = db.collection(f'filter_flight').document(f'{id}')
+            doc_ref2 = db.collection(f'detail_and_grid').document(u'detail').collection(f'{id}')
+            doc_ref.set({
+                'date': int(df.iloc[0].timestamp.floor(freq='H').timestamp()),
+                'id':id,
+                'period':period
+            })
+            postdata = df.to_dict('records')
+            list(map(lambda x: doc_ref2.add(x), postdata))
+            print('insert success', id)
+
+
+
+            
+
         # print(date_index, period, id)
-        doc_ref = db.collection(f'filter_flight')
+        # doc_ref = db.collection(f'filter_flight')
         # doc_ref2 = db.collection(f'detail_and_grid').document(u'detail').collection(f'{id}')
         # print(df.iloc[0].timestamp ,df.iloc[0].timestamp.floor(freq='H').strftime("%s"), int(df.iloc[0].timestamp.floor(freq='H').strftime("%s"))+3600)
-        doc_ref.add({
-            # 'date':f'{date_index}',
-            # 'date': int(date_index.strftime("%s")),
-            'date': int(df.iloc[0].timestamp.floor(freq='H').strftime("%s")),
-            # 'date':time.mktime(datetime.datetime.strptime(date_index, '%Y-%m-%d').timetuple()),
-            # 'date':date_index.datetime.timestamp(),
-            'id':id,
-            'period':period
-        })
+        # doc_ref.add({
+        #     # 'date':f'{date_index}',
+        #     # 'date': int(date_index.strftime("%s")),
+            # 'date': int(df.iloc[0].timestamp.floor(freq='H').strftime("%s")),
+        #     # 'date':time.mktime(datetime.datetime.strptime(date_index, '%Y-%m-%d').timetuple()),
+        #     # 'date':date_index.datetime.timestamp(),
+        #     'id':id,
+        #     'period':period
+        # })
         # postdata = df.to_dict('records')
         # list(map(lambda x: doc_ref2.add(x), postdata))
     return {'response':'success'}
@@ -297,6 +323,53 @@ def firebase():
     list(map(lambda x: doc_ref.add(x), postdata))
     return {'status':'good'}
 
+@app.post('/grid_to_firebase')
+def grid2firebase():
+    path = '../Preprocess/grid_flights/'
+    csv_files = glob.glob(os.path.join(path, "*.csv"))
+    for f in csv_files:
+        df = pd.read_csv(f)
+        # print(df)
+        if os.name == 'nt':
+            filename = f.split('\\')[1]
+        else:
+            filename = f.split('/')[2]
+        
+        flight_id = filename[:-4]
+
+        doc_ref = db.collection('detail_and_grid').document('grid').collection(f'{flight_id}')
+        postdata = df.to_dict('records')
+        # print(postdata[0])
+        list(map(lambda x: doc_ref.add(x), postdata))
+
+    return {'response':'successful'}
+
+
+@app.get('/test_get_grid')
+def test_get_grid():
+    path = '../Preprocess/grid_flights/'
+    csv_files = glob.glob(os.path.join(path, "*.csv"))
+    for f in csv_files:
+        df = pd.read_csv(f)
+        # print(df)
+        if os.name == 'nt':
+            filename = f.split('\\')[1]
+        else:
+            filename = f.split('/')[2]
+        
+        flight_id = filename[:-4]
+        doc_ref = db.collection('detail_and_grid').document('grid').collection(f'{flight_id}').order_by('Lat',direction=firestore.Query.DESCENDING)
+        docs = list(doc_ref.stream())
+        flight_dict = list(map(lambda x: x.to_dict(), docs))
+        df = pd.DataFrame(flight_dict)
+        df.set_index('Lat',inplace=True)
+        col = list(df.columns)
+        col.sort()
+        df = df[col]
+        print(df)
+        break
+
+    return
 
 
 # uvicorn main:app --reload
