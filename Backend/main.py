@@ -29,6 +29,10 @@ class api_flightID(BaseModel):
     date:str
     period:Union[str, None] = None
 
+class list_flight(BaseModel):
+    flights:Union[list, None] = None
+
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -250,11 +254,55 @@ def get_flight(item:api_flightID):
             res_list.append(tmp_dict)
             # print()
             # break
-    print(res_list)
+    # print(res_list)
+    return {'response':'success','res':res_list}
 
+@app.post('/filter_flight')
+def filter_flight(item:api_flightID):
+    date_check, param_date = validate(item.date)
+    if date_check:
+        return {'response': param_date}
+    period = None
+    if item.period in ['day','night']:
+        period = item.period
+    # print(param_date+3600)
+    # doc_ref = db.collection('filter_flight').where('period','==',period).where('date','==',param_date).limit(3)
+    doc_ref = db.collection('filter_flight').where('date','>=',param_date).where('date','<',param_date+10800).limit(3)
+    docs = list(doc_ref.stream())
+    flight_dict = list(map(lambda x: x.to_dict(), docs))
+    return {'res':flight_dict}
 
+@app.post('/flight_path')
+def flight_path(item:list_flight):
+    for i in item.flights:
+        print(i)
+    flight_list = item.flights
+    res_list = []
+    for id in flight_list:
+        doc_ref2 = db.collection('detail_and_grid').document('detail').collection(f'{id}').order_by('timestamp')
+        docs = list(doc_ref2.stream())
+        flight_dict = list(map(lambda x: x.to_dict(), docs))
+        df = pd.DataFrame(flight_dict)
+        df = df[['longitude','latitude','altitude']].values.tolist()
 
-
+        doc_ref3 = db.collection('detail_and_grid').document('grid').collection(f'{id}')
+        docs2 = list(doc_ref3.stream())
+        flight_dict2 = list(map(lambda x: x.to_dict(), docs2))
+        df2 = pd.DataFrame(flight_dict2)
+        # print(df2)
+        df2 = pd.melt(df2, id_vars=['Lat'], value_vars=df2.drop(columns=['Lat']).columns)
+        print(df2)
+        df2.rename(columns={'variable':'Long'},inplace=True)
+        df2['value'] = df2['value']/100
+        df2 = df2[['Long','Lat','value']].values.tolist()
+        # print(df)
+        # print(df2)
+        tmp_dict ={
+            'id':id,
+            'value':df,
+            'grid':df2
+        }
+        res_list.append(tmp_dict)
     return {'response':'success','res':res_list}
 
 
@@ -291,37 +339,10 @@ def csv_2_db():
             postdata = df.to_dict('records')
             list(map(lambda x: doc_ref2.add(x), postdata))
             print('insert success', id)
-
-
-
-            
-
-        # print(date_index, period, id)
-        # doc_ref = db.collection(f'filter_flight')
-        # doc_ref2 = db.collection(f'detail_and_grid').document(u'detail').collection(f'{id}')
-        # print(df.iloc[0].timestamp ,df.iloc[0].timestamp.floor(freq='H').strftime("%s"), int(df.iloc[0].timestamp.floor(freq='H').strftime("%s"))+3600)
-        # doc_ref.add({
-        #     # 'date':f'{date_index}',
-        #     # 'date': int(date_index.strftime("%s")),
-            # 'date': int(df.iloc[0].timestamp.floor(freq='H').strftime("%s")),
-        #     # 'date':time.mktime(datetime.datetime.strptime(date_index, '%Y-%m-%d').timetuple()),
-        #     # 'date':date_index.datetime.timestamp(),
-        #     'id':id,
-        #     'period':period
-        # })
-        # postdata = df.to_dict('records')
-        # list(map(lambda x: doc_ref2.add(x), postdata))
     return {'response':'success'}
 
 
-@app.get('/test_firebase')
-def firebase():
-    doc_ref = db.collection(f'dd-mm-yy').document(u'Day').collection(u'flight_ID')
 
-    df = pd.read_csv('./../Preprocess/data/Sample_data3.csv')
-    postdata = df.to_dict('records')
-    list(map(lambda x: doc_ref.add(x), postdata))
-    return {'status':'good'}
 
 @app.post('/grid_to_firebase')
 def grid2firebase():
@@ -333,7 +354,7 @@ def grid2firebase():
         if os.name == 'nt':
             filename = f.split('\\')[1]
         else:
-            filename = f.split('/')[2]
+            filename = f.split('/')[3]
         
         flight_id = filename[:-4]
 
@@ -341,6 +362,7 @@ def grid2firebase():
         postdata = df.to_dict('records')
         # print(postdata[0])
         list(map(lambda x: doc_ref.add(x), postdata))
+        print(f'add {flight_id} succuess')
 
     return {'response':'successful'}
 

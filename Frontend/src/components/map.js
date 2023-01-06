@@ -9,6 +9,7 @@ import axios from 'axios';
 import { BsFillHandThumbs } from "react-icons/bs";
 
 
+
 const { Option } = Select;
 
 // var test_data = [{
@@ -29,8 +30,18 @@ const { Option } = Select;
 
 var test_data = []
 
-var test_scatter = [[100.5971, 13.8989, 15, "Hello World"]]
+var test_scatter = [[100.5971, 13.8989, 15, "AAA111"]]
 // var test_scatter = [[100.5971, 13.8989, 15, ▄]]
+
+// var test_radar = [[100.5971, 13.8989]]
+var test_radar = [{
+        name:'aa',
+        coords: [[100.5971, 13.8989, 1], [100.5837, 13.8755, 1], [100.5572, 13.8620, 1], [100.5400, 13.8555, 1], [100.5971, 13.8989, 1]],
+        date:'2022-10-04',
+        time_1:'17:23:06',
+        time_2:'17:24:10',
+        week:'1'
+    }]
 
 var map = {
     center: [100.6042,13.9133], 
@@ -48,14 +59,18 @@ var map = {
 const url = 'http://localhost:8000/';
 
 class Map extends React.Component {
+
     constructor(props) {
         super(props);
         this.state = {
             data : test_data,
             checkedList: [],
             list: [],
-            scatter: test_scatter
+            scatter: test_scatter,
+            radar: test_radar
         };
+        this.date = props.selectDate
+        this.time = props.selectTime
         this.flight = props.data
         this.check = props.name
         this.what = props.what
@@ -64,17 +79,29 @@ class Map extends React.Component {
     }
 
     componentWillMount(){
+        console.log('Date => ',this.state.date)
         if(this.what === "Flight no"){
             this.getData(this.flight)
         }
-        axios.get(url+'get_flight').then((response) => {
-            console.log(response.data);
-            test_data.push(response.data);
-            this.getData(test_data)
-          })
-          .catch((error) => {
-            console.log(error)
-          });
+        // axios.get(url+'get_flight').then((response) => {
+        //     console.log(response.data);
+        //     test_data.push(response.data);
+        //     this.getData(test_data)
+        //   })
+        //   .catch((error) => {
+        //     console.log(error)
+        //   });
+        // axios.post(url+'get_flight',{
+        //     'date': this.date
+        // }).then((response) => {
+        //     // console.log(response.data.res[0]['value']);
+        //     test_data.push(response.data.res[0]['value']);
+        //     this.getData(test_data)
+        //     console.log(test_data)
+        //   })
+        //   .catch((error) => {
+        //     console.log("error ->",error)
+        //   });
 
     }
 
@@ -83,6 +110,7 @@ class Map extends React.Component {
     onhandleChange(value,data) {
         var data_select = []
         var data_scatter = []
+        // var data_radar = []
         this.setState({checkedList : value})
         for(var j=0;j<value.length;j++){
             for(var i=0;i<data.length;i++){
@@ -139,13 +167,32 @@ class Map extends React.Component {
                     opacity: 0.5
                 },
                 data: this.state.data 
-            }
+            },
+            // {
+            //     type: 'lines3D',
+            //     coordinateSystem: 'maptalks3D',
+            //     polyline: true,
+            //     lineStyle: {
+            //         width: 2,
+            //         color: 'rgb(255, 0, 0)',
+            //         opacity: 0.5
+            //     },
+            //     // pointSize: 5,
+            //     // blurSize: 6,
+            //     data: this.state.radar
+            // }
         ],
     });
   
     render(props) {
       return (
+        
         <div>
+            <button onClick={() => (
+            console.log(this.state.date)
+            )}>
+            log date
+            </button>
             {this.what === "Date" ?
             <Select
                 mode="multiple"
