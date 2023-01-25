@@ -523,6 +523,7 @@ def flight_path(item:list_flight):
         res_list.append(tmp_dict)
         
         
+        
     return {'response':'success','res':res_list, 'cumu_grid':cumu_grid}
 
 

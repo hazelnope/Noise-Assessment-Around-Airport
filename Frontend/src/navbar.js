@@ -12,6 +12,8 @@ function NavScrollExample(props) {
   const [selecttime, setSelectTime] = useState('')
   const [checkDate, setCheckDate] = useState(0)
   const [checkTime, setCheckTime] = useState(0)
+
+
   var temp_flight = []
 
   const handleDateClick = (eventKey) => {
@@ -28,16 +30,35 @@ function NavScrollExample(props) {
     console.log('key aftedr split', eventKey)
     // props.handleTimeChange(eventKey);
     setSelectTime(eventKey);
+
+    if ( eventKey === '21:00:00' ) {
+      props.handleDurationDay(2)
+      props.handleDurationNight(1)
+    }
+    else if ( eventKey === '00:00:00' || eventKey === '03:00:00') {
+      props.handleDurationDay(0)
+      props.handleDurationNight(3)
+    }
+    else if ( eventKey === '06:00:00' ) {
+      props.handleDurationDay(2)
+      props.handleDurationNight(1)
+    }
+    else {
+      props.handleDurationDay(3)
+      props.handleDurationNight(0)
+    }
+
   };
 
   const handleSearch = async (flight_dict)=>{
     temp_flight = []
+    console.log('เป็นรัย1',flight_dict)
     await flight_dict.forEach( function (item){
       // console.log('loop',item)
       temp_flight.push(item.id)
     } )
     props.handleFilterFlights(temp_flight)
-
+    console.log('เป็นรัย2',temp_flight)
   }
 
   const search = () => {

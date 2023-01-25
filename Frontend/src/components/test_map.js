@@ -18,7 +18,7 @@ var test_scatter = []
 var map = {
     center: [100.6042, 13.9133],
     zoom: 13,
-    altitudeScale: 100,
+    altitudeScale: 1,
     pitch: 45,
     bearing: 15,
     baseLayer: new maptalks.TileLayer('base', {
@@ -60,34 +60,37 @@ const My_test_map = (props) => {
         maptalks3D: map,
 
         visualMap: {
-            max: 1,
+            max: 90,
             inRange: {
                 color: [
-                    '#313695',
-                    '#4575b4',
-                    '#74add1',
-                    '#abd9e9',
-                    '#e0f3f8',
-                    '#ffffbf',
-                    '#fee090',
-                    '#fdae61',
-                    '#f46d43',
-                    '#d73027',
-                    '#a50026'
+                    // '#1aa450',
+                    // '#1aa450',
+                    // '#45c03c',
+                    // '#82d235',
+                    // '#a7df40',
+                    // '#cddd3e',
+                    // '#dfd43e',
+                    // '#e0b13f',
+                    // '#e0a231',
+                    // '#de8618',
+                    // '#d46412',
+                    // '#dc4413',
+                    // '#de3a17',
+                    // '#e02514',
+                    // '#d01715',
+
+                    //อันใหม่
+                    '#1aa450', //0
+                    '#4ded2d', //15
+                    '#aaed2d', //30
+                    '#eded2d', //45
+                    '#eda02d', //60
+                    '#ed732d', //75
+                    '#ed472d', //90
                 ]
             }
         },
         // grid3D: {
-        //   boxWidth: 200,
-        //   boxDepth: 80,
-        //   light: {
-        //     main: {
-        //       intensity: 1.2
-        //     },
-        //     ambient: {
-        //       intensity: 0.3
-        //     }
-        //   }
         // },
 
         series: [
@@ -143,8 +146,10 @@ const My_test_map = (props) => {
                 data: gridData,
                 shading: 'color',
                 barSize: 1.49,
+                minHeight: 0,
+                maxHeight: 11,
                 label: {
-                    show: false,
+                    show: true,
                     fontSize: 16,
                     borderWidth: 0
                 },
@@ -167,7 +172,7 @@ const My_test_map = (props) => {
     const getData = (result) => {
         // var data_select = []
         // var data_scatter = []
-        console.log('resulttttt', result)
+        // console.log('resulttttt', result)
         // console.log('resulttttt', result)
         // setData(result)
         setData([])
@@ -184,10 +189,10 @@ const My_test_map = (props) => {
             itr_dict['name'] = result[flight].id
             // console.log('flight', flight)
             // console.log(result[flight].value)
-            console.log('dicts', itr_dict)
+            // console.log('dicts', itr_dict)
             setData(previousState => [...previousState, itr_dict])
         }
-        console.log("Data", data)
+        // console.log("Data", data)
     }
 
 
@@ -206,12 +211,16 @@ const My_test_map = (props) => {
         const fetchData = async () => {
             console.log('working....')
             setParamFlight(props.flightsData)
-            const response = await axios.post(url + 'flight_path', { 'flights': props.flightsData }).catch((error) => {
+            const response = await axios.post(url + 'flight_path', { 
+                'flights': props.flightsData ,
+                'duration_day':props.durationDay,
+                'duration_night':props.durationNight
+            }).catch((error) => {
                 console.log("error ->", error)
             });
             getData(response.data.res)
-            console.log('response ', response.data.res);
-            console.log('grid', response.data.res[0].grid)
+            // console.log('response ', response.data.res);
+            // console.log('grid', response.data.res[0].grid)
             setGridData(response.data.res[0].grid)
             props.handleLoading(false);
 

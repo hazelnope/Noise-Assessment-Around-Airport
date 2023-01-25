@@ -1,3 +1,4 @@
+sep=;
 ACFT_ID;Op Type;Profile_ID;Stage Length;Point Number;Distance (ft);Altitude AFE (ft);TAS (kt);Power Setting
 707;A;DEFAULT;1;1;-114487.0;6000.0;250.0;600.0
 707;A;DEFAULT;1;2;-57243.0;3000.0;124.0;3560.0

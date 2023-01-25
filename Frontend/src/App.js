@@ -18,6 +18,8 @@ function App() {
   const [filterFlights, setFilterFlights] = useState([])
   const [selectFlights, setSelectFlights] = useState([])
   const [isLoading, setLoading] = useState(false);
+  const [durationDay, setDurationDay] = useState(0)
+  const [durationNight, setDurationNight] = useState(0)
 
   // const [selectdate, setSelectdate] = useState('Hello there')
   // const [selecttime, setSelectTime] = useState('')
@@ -29,13 +31,21 @@ function App() {
   }
 
   const handleSelectFlights = (newItem) => {
-    console.log("selectFlight",newItem)
+    console.log("selectFlight", newItem)
     setSelectFlights(newItem)
   }
   const handleLoading = (newItem) => {
     setLoading(newItem)
   }
+  const handleDurationDay = (newItem) => {
+    setDurationDay(newItem)
+    console.log('day',durationDay)
+  }
+  const handleDurationNight = (newItem) => {
+    setDurationNight(newItem)
+    console.log('night',durationNight)
 
+  }
   // const handleDateChange = (newDate) => {
   //   setSelectdate(newDate);
   // };
@@ -46,22 +56,13 @@ function App() {
 
   return (
     <div className="App">
-      {/* <button onClick={() => (
-          setSelectdate("Reset")
-        )}>
-          Reset date
-        </button> */}
 
-      {/* <button onClick={() => (
-          console.log(filterFlights)
-        )}>
-          log filterFlights
-        </button> */}
-
+      
       <Navbar handleFilterFlights={handleFilterFlights}
-      // handleDateChange = {handleDateChange}
-      // handleTimeChange = {handleTimeChange}
+        handleDurationDay={handleDurationDay}
+        handleDurationNight={handleDurationNight}
       />
+
       {/* <Map selectdate = {selectdate}/> */}
       <Select_flights filterFlights={filterFlights}
         handleSelectFlights={handleSelectFlights}
@@ -74,7 +75,10 @@ function App() {
       /> */}
       <My_test_map flightsData={selectFlights}
         handleLoading={handleLoading}
-        isLoading={isLoading}/>
+        isLoading={isLoading} 
+        durationDay={durationDay}
+        durationNight={durationNight}
+        />
     </div>
   );
 }
