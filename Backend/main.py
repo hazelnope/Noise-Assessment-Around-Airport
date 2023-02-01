@@ -1,3 +1,4 @@
+from fastapi.responses import JSONResponse
 from fastapi import FastAPI
 import pandas as pd
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,8 +15,10 @@ from typing import Union
 import datetime
 import os
 import glob
+import itertools
 
 from function_backend.grid_to_firebase import generate_grid
+from function_backend.cumulative_level import Cumulative_model
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -435,49 +438,39 @@ def grid2firebase(date:generate_grid_api):
     flight_dict = list(map(lambda x: x.to_dict(), docs))
     flight_list = []
     result = {
-        'error @ NPD ACFT':[],
+        'error':[],
         'succuss':[]
     }
     for i in flight_dict:
+        name = i['id']
+        doc_ref2 = db.collection('detail_and_grid').document('grid').collection(f'{name}')
+        check_exist = doc_ref2.limit(1).stream()
+        check_exist = list(check_exist)
+        if check_exist != []:
+            print('found')
+            continue
+
+
         tmp = generate_grid(i['id'], db)
-        if tmp['status'] == 0:
-            result['error @ NPD ACFT'].append(tmp)
-        else:
+        df_grid = tmp.pop('df', None)
+
+        # if tmp['status'] == 0:
+        #     result['error'].append(tmp)
+        # else:
+        #     result['succuss'].append(tmp)
+        if df_grid is not None:
             result['succuss'].append(tmp)
+            # flight_list.append(df_grid)
+            postdata = df_grid.to_dict('records')
+            print(postdata)
+            # list(map(lambda x: doc_ref2.add(x), postdata))
+            print(f'add {i} succuess')
+        else:
+            result['error'].append(tmp)
         break
-        # if result[''] == False:
-        #     continue
+  
 
-    # path = '../Preprocess/grid_flights/'
-    # csv_files = glob.glob(os.path.join(path, "*.csv"))
-    # for f in csv_files:
-    #     print(f)
-
-    #     if os.name == 'nt':
-    #         filename = f.split('\\')[1]
-    #     else:
-    #         filename = f.split('/')[3]
-        
-    #     flight_id = filename[:-4]
-    #     print(flight_id)
-    #     doc_ref = db.collection('detail_and_grid').document('grid').collection(f'{flight_id}')
-    #     check_exist = doc_ref.limit(1).stream()
-    #     check_exist = list(check_exist)
-    #     if check_exist != []:
-    #         print('found')
-    #         continue
-    #     else:
-    #         print('not found',flight_id)
-
-    #         df = pd.read_csv(f)
-    #         # print(df)
-
-    #         postdata = df.to_dict('records')
-
-    #         list(map(lambda x: doc_ref.add(x), postdata))
-    #         print(f'add {flight_id} succuess')
-
-    return {'response':result}
+    return JSONResponse(content=result)
 
 
 
@@ -490,7 +483,10 @@ def flight_path(item:list_flight):
     flight_list = item.flights
     res_list = []
     #----- result grid for plot -----#
-    cumu_grid = [[0 for x in range(5)] for y in range(5)]
+    cumu_value = [[0 for x in range(50)] for y in range(50)]
+    
+    cumu_grid = []
+    df_cumu = {}
     
     for id in flight_list:
         doc_ref2 = db.collection('detail_and_grid').document('detail').collection(f'{id}').order_by('timestamp')
@@ -505,12 +501,32 @@ def flight_path(item:list_flight):
         flight_dict2 = list(map(lambda x: x.to_dict(), docs2))
         df2 = pd.DataFrame(flight_dict2)
         
+        #----- for cumu grid -----#
+        doc_ref4 = db.collection('filter_flight').document(f'{id}')
+        docs3 = doc_ref4.get()
+        df3 = docs3.to_dict()
+        
         if not df2.empty:
+            df4 = df2.copy()
             df2 = pd.melt(df2, id_vars=['Lat'], value_vars=df2.drop(columns=['Lat']).columns)
             # print(df2)
             df2.rename(columns={'variable':'Long'},inplace=True)
             # df2['value'] = df2['value']/100
+            cumu_grid = df2[['Long','Lat']].values.tolist()
             df2 = df2[['Long','Lat','value']].values.tolist()
+            
+            #-----cumu grid -----#
+            df_cumu[id] = {}
+            df_cumu[id]['period'] = df3['period']
+            
+            df4.set_index('Lat',inplace=True)
+            df4.sort_index(ascending=False,inplace=True)
+            col = list(df4.columns)
+            col.sort()
+            df4 = df4[col]
+            df_cumu[id]['grid'] = df4.copy()
+
+            
         else:
             # print('empty : ',id)
             # print(df2)
@@ -522,10 +538,39 @@ def flight_path(item:list_flight):
         }
         res_list.append(tmp_dict)
         
+    if len(df_cumu) != 0:
         
+        #----- result grid for plot -----#
+        cumu_value = [[0 for x in range(50)] for y in range(50)]
+        #----- Variable Value for Cumulative Level ( Day-Night ) -----#
+        t0 = 1
+        T0 = 3
+            
+        #----- calculate cumulative level -----#
+        for i in range(len(df_cumu[list(df_cumu.keys())[0]]['grid'])):
+            for j in range(len(df_cumu[list(df_cumu.keys())[0]]['grid'])):
+                LDN = 0
+                for key in df_cumu.keys():
+                    LDN = LDN + Cumulative_model(df_cumu[key]['period'], df_cumu[key]['grid'].iloc[i, j])
+                    # LDN = LDN + Cumulative_model(df_cumu[key]['period'], df_cumu[key]['grid'].iloc[i, j], duration_day, duration_night)
+                cumu_value[i][j] = 10*np.log10( (t0 / T0) * LDN )
         
-    return {'response':'success','res':res_list, 'cumu_grid':cumu_grid}
+        #----- set value to [long, lat, value] format -----#
+        cumu_value = list(itertools.chain.from_iterable(cumu_value))
+        for target_list, input_val in zip(cumu_grid, cumu_value):
+            target_list.append(input_val)
+            
+    
+    # for index, row in df_cumu[list(df_cumu.keys())[0]].iterrows():
+    #     LDN = 0
+    #     for long in  df_cumu[list(df_cumu.keys())[0]].columns:
+    #         for key in df_cumu.keys():
+    #             LDN += LDN + Cumulative_model(df_cumu[key]['period'], df_cumu[key]['grid'].loc[index, long])
+    #         cumu_value.loc[index,long] = LDN
 
+        
+    # return {'response':'success','res':res_list}
+    return {'response':'success','res':res_list, 'cumu_grid':cumu_grid}
 
 @app.get('/csv_2_db')
 def csv_2_db():
