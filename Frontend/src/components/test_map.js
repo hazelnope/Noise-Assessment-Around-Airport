@@ -3,7 +3,7 @@ import ReactEcharts from 'echarts-for-react';
 import 'echarts-gl'
 import 'mapbox-echarts'
 import * as maptalks from 'maptalks'
-import { Select, Checkbox } from 'antd';
+import { Select, Checkbox, Button } from 'antd';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import { url } from './../config';
@@ -219,9 +219,10 @@ const My_test_map = (props) => {
                 console.log("error ->", error)
             });
             getData(response.data.res)
-            // console.log('response ', response.data.res);
+            console.log('response ', response.data);
             // console.log('grid', response.data.res[0].grid)
-            setGridData(response.data.res[0].grid)
+            setGridData(response.data.cumu_grid)
+            // setGridData(response.data.res[0].grid)
             props.handleLoading(false);
 
         }
@@ -233,6 +234,7 @@ const My_test_map = (props) => {
     return (
         <div>
             <ReactEcharts option={getOption()} style={{ width: '100%', height: 800, border: '1px solid lightgray' }} />
+            <button onClick={()=>console.log('grid', gridData)}> check grid </button>
         </div>
     );
 
