@@ -114,7 +114,7 @@ def get_flight():
 
 
 @app.post("/test")
-def create_date_range(date_range: DateRange):
+async def create_date_range(date_range: DateRange):
     start_date = date_range.start_date
     end_date = date_range.end_date
     hour = date_range.hour
@@ -132,19 +132,24 @@ def create_date_range(date_range: DateRange):
     Airport_start = f'{start_date}T{hour}%3A00%3A00Z'
     Airport_end = f'{end_date}T{end_hour}%3A00%3A00Z'
     #----- get flight data from DMK airport -----#
-    response = requests.get(apiUrl + f"airports/{Airport_id}/flights/departures?start={Airport_start}&end={Airport_end}",
+    response = requests.get(apiUrl + f"airports/{Airport_id}/flights/departures?start={Airport_start}&end={Airport_end}&max_pages=4",
     headers=auth_header)
-        
-
+    
     Departures_FlightID = []
     counter = 0
     for i in response.json()['departures']:
-        if counter == 3:
-            break
+        # if counter == 3:
+        #     break
         counter += 1
         if 'schedule' in i['fa_flight_id']:
             Departures_FlightID.append(i['fa_flight_id'])
+            # counter += 1
+
     # print(Departures_FlightID)
+
+    # print(response.json())
+    # print('counter =>',counter)
+    # return response.json()
 
     #----- get data from flight ID -----#
     Dict_departures_flights = {
@@ -216,7 +221,7 @@ def create_date_range(date_range: DateRange):
             print("Error executing request")
             
         # i+=1
-        time.sleep(7)
+        time.sleep(15)
 
     # print(Dict_departures_flights)
     for day_night in Dict_departures_flights:
@@ -232,7 +237,7 @@ def create_date_range(date_range: DateRange):
             # })
             doc_ref.set({
                 'date': int(Dict_departures_flights[day_night][flight].iloc[0].timestamp.floor(freq='H').timestamp()),
-                'id':id,
+                'id':flight,
                 'period':day_night
             })
             postdata = Dict_departures_flights[day_night][flight].to_dict('records')
@@ -240,8 +245,8 @@ def create_date_range(date_range: DateRange):
             print('insert success', flight)
        
 
-    # return {"response": f'Insert successful','status_code':200}
-    return {"None":Dict_departures_flights}
+    return {"response": f'Insert successful','status_code':200}
+    # return {"None":Dict_departures_flights}
 
 
 @app.post('/get_flightaware')
@@ -442,6 +447,7 @@ def grid2firebase(date:generate_grid_api):
         'succuss':[]
     }
     for i in flight_dict:
+        print(i)
         name = i['id']
         doc_ref2 = db.collection('detail_and_grid').document('grid').collection(f'{name}')
         check_exist = doc_ref2.limit(1).stream()
@@ -458,15 +464,19 @@ def grid2firebase(date:generate_grid_api):
         #     result['error'].append(tmp)
         # else:
         #     result['succuss'].append(tmp)
+        # print('----------------', df_grid)
         if df_grid is not None:
             result['succuss'].append(tmp)
             # flight_list.append(df_grid)
+            df_grid.reset_index(inplace=True)
+            df_grid.columns = [str(col) for col in df_grid.columns]
             postdata = df_grid.to_dict('records')
-            print(postdata)
-            # list(map(lambda x: doc_ref2.add(x), postdata))
+            # print(postdata)
+            list(map(lambda x: doc_ref2.add(x), postdata))
             print(f'add {i} succuess')
         else:
             result['error'].append(tmp)
+            # print("test", i)
         break
   
 
@@ -480,10 +490,12 @@ def flight_path(item:list_flight):
     # print(item.duration_day, item.duration_night)
     # for i in item.flights:
     #     print(i)
+    
+    size = 40
     flight_list = item.flights
     res_list = []
     #----- result grid for plot -----#
-    cumu_value = [[0 for x in range(50)] for y in range(50)]
+    cumu_value = [[0 for x in range(size)] for y in range(size)]
     
     cumu_grid = []
     df_cumu = {}
@@ -508,16 +520,29 @@ def flight_path(item:list_flight):
         
         if not df2.empty:
             df4 = df2.copy()
+            cumu_grid = df2.copy()
             df2 = pd.melt(df2, id_vars=['Lat'], value_vars=df2.drop(columns=['Lat']).columns)
             # print(df2)
             df2.rename(columns={'variable':'Long'},inplace=True)
             # df2['value'] = df2['value']/100
-            cumu_grid = df2[['Long','Lat']].values.tolist()
+            # cumu_grid = df2[['Long','Lat']].values.tolist()
             df2 = df2[['Long','Lat','value']].values.tolist()
             
             #-----cumu grid -----#
             df_cumu[id] = {}
             df_cumu[id]['period'] = df3['period']
+            
+            cumu_grid.set_index('Lat',inplace=True)
+            cumu_grid = cumu_grid.T
+            cumu_grid.sort_index(inplace=True)
+            col = list(cumu_grid.columns)
+            col.sort(reverse=True)
+            cumu_grid = cumu_grid[col]
+            
+            cumu_grid.index.name = 'Long'
+            cumu_grid.reset_index(inplace=True)
+            cumu_grid = pd.melt(cumu_grid, id_vars=['Long'], value_vars=cumu_grid.drop(columns=['Long']).columns)
+            cumu_grid = cumu_grid[['Long','Lat']].values.tolist()
             
             df4.set_index('Lat',inplace=True)
             df4.sort_index(ascending=False,inplace=True)
@@ -527,21 +552,21 @@ def flight_path(item:list_flight):
             df_cumu[id]['grid'] = df4.copy()
 
             
-        else:
+        # else:
             # print('empty : ',id)
             # print(df2)
-            df2 = df2.values.tolist()
+            # df2 = df2.values.tolist()
         tmp_dict ={
             'id':id,
             'value':df,
-            'grid':df2
+            # 'grid':df2
         }
         res_list.append(tmp_dict)
         
     if len(df_cumu) != 0:
         
         #----- result grid for plot -----#
-        cumu_value = [[0 for x in range(50)] for y in range(50)]
+        cumu_value = [[0 for x in range(size)] for y in range(size)]
         #----- Variable Value for Cumulative Level ( Day-Night ) -----#
         t0 = 1
         T0 = 3

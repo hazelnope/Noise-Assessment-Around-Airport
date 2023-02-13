@@ -1,4 +1,4 @@
-import React, { createRef, useEffect, useState } from "react";
+import React, { createRef, useEffect, useState, useMemo } from "react";
 import ReactEcharts from 'echarts-for-react';
 import 'echarts-gl'
 import 'mapbox-echarts'
@@ -7,6 +7,7 @@ import { Select, Checkbox, Button } from 'antd';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import { url } from './../config';
+// import { Marker } from 'google-maps-React';
 
 
 
@@ -55,6 +56,10 @@ const My_test_map = (props) => {
     const [scatter, setScatter] = useState(test_scatter)
     const [paramFlight, setParamFlight] = useState(props.flightsData)
     const [gridData, setGridData] = useState([])
+    const [userLat, setUserLat] = useState(props.userLat)
+    const [userLong, setUserLong] = useState(props.userLong)
+
+
 
     const getOption = () => ({
         maptalks3D: map,
@@ -80,12 +85,20 @@ const My_test_map = (props) => {
                     // '#d01715',
 
                     //อันใหม่
+                    // '#1aa450', //0
+                    // '#4ded2d', //15
+                    // '#aaed2d', //30
+                    // '#eded2d', //45
+                    // '#eda02d', //60
+                    // '#ed732d', //75
+                    // '#ed472d', //90
+
+                    //อันหใม่กว่า
                     '#1aa450', //0
-                    '#4ded2d', //15
-                    '#aaed2d', //30
-                    '#eded2d', //45
-                    '#eda02d', //60
-                    '#ed732d', //75
+                    '#4ded2d', //18
+                    '#4ded2d', //36
+                    '#4ded2d', //54
+                    '#eda02d', //72
                     '#ed472d', //90
                 ]
             }
@@ -112,6 +125,29 @@ const My_test_map = (props) => {
                 },
             },
             {
+                name: 'Custom Marker',
+                type: 'scatter3D',
+                coordinateSystem: 'maptalks3D',
+                itemStyle: {
+                    normal: {
+                      color: '#ddb926',
+                      opacity: '1'
+                    }
+                  },
+                data: scatter,
+                symbolSize: 20,
+                label: {
+                    normal: {
+                      formatter: '{b}',
+                      position: 'right',
+                      show: false
+                    },
+                    emphasis: {
+                      show: true
+                    }
+                  },
+            },
+            {
                 type: 'lines3D',
                 coordinateSystem: 'maptalks3D',
                 effect: {
@@ -129,17 +165,6 @@ const My_test_map = (props) => {
                 },
                 data: data
             },
-            // {
-            //     type: 'polygon3D',
-            //     coordinateSystem: 'maptalks3D',
-            //     data: test_poly,
-            //     color: 'rgba(255, 0, 0, 0.8)',
-            //     shading: 'lambert',
-            //     lineStyle: {
-            //       width: 2,
-            //       color: 'rgba(0, 0, 0, 0.5)'
-            //     }
-            // },
             {
                 type: 'bar3D',
                 coordinateSystem: 'maptalks3D',
@@ -149,31 +174,38 @@ const My_test_map = (props) => {
                 minHeight: 0,
                 maxHeight: 11,
                 label: {
-                    show: true,
-                    fontSize: 16,
-                    borderWidth: 0
+                    show: false,
+                    formatter: function (data) {
+                        // return data.data[2];
+                        return parseFloat(data.data[2]).toFixed(2);
+
+                    },
                 },
                 itemStyle: {
                     opacity: 0.2
                 },
                 emphasis: {
-                  label: {
-                    fontSize: 20,
-                    color: '#900'
-                  },
-                  itemStyle: {
-                    color: '#900'
-                  }
+                    label: {
+                        opacity: 0.8,
+                        fontSize: 20,
+                        color: '#001855',
+                    },
+                    itemStyle: {
+                        color: '#001855'
+                    },
                 }
             }
         ],
     });
 
+
+
+
     const getData = (result) => {
         // var data_select = []
         // var data_scatter = []
         // console.log('resulttttt', result)
-        // console.log('resulttttt', result)
+        console.log('resulttttt', result)
         // setData(result)
         setData([])
         setScatter([])
@@ -207,14 +239,14 @@ const My_test_map = (props) => {
         //   .catch((error) => {
         //     console.log(error)
         //   });
-
+        // console.log("type ", typeof getOption)
         const fetchData = async () => {
             console.log('working....')
             setParamFlight(props.flightsData)
-            const response = await axios.post(url + 'flight_path', { 
-                'flights': props.flightsData ,
-                'duration_day':props.durationDay,
-                'duration_night':props.durationNight
+            const response = await axios.post(url + 'flight_path', {
+                'flights': props.flightsData,
+                'duration_day': props.durationDay,
+                'duration_night': props.durationNight
             }).catch((error) => {
                 console.log("error ->", error)
             });
@@ -223,7 +255,7 @@ const My_test_map = (props) => {
             // console.log('grid', response.data.res[0].grid)
             setGridData(response.data.cumu_grid)
             // setGridData(response.data.res[0].grid)
-            props.handleLoading(false);
+            // props.handleLoading(false);
 
         }
         fetchData()
@@ -233,8 +265,9 @@ const My_test_map = (props) => {
 
     return (
         <div>
-            <ReactEcharts option={getOption()} style={{ width: '100%', height: 800, border: '1px solid lightgray' }} />
-            <button onClick={()=>console.log('grid', gridData)}> check grid </button>
+            <ReactEcharts option={getOption()} notMerge={true}
+                lazyUpdate={true} style={{ width: '100%', height: 800, border: '1px solid lightgray' }} />
+
         </div>
     );
 

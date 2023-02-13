@@ -27,7 +27,7 @@ function NavScrollExample(props) {
     setCheckTime(eventKey);
     eventKey = eventKey.split(' ')[0]
     eventKey = eventKey+':00'
-    console.log('key aftedr split', eventKey)
+    // console.log('key aftedr split', eventKey)
     // props.handleTimeChange(eventKey);
     setSelectTime(eventKey);
 
@@ -52,13 +52,13 @@ function NavScrollExample(props) {
 
   const handleSearch = async (flight_dict)=>{
     temp_flight = []
-    console.log('เป็นรัย1',flight_dict)
+    // console.log('เป็นรัย1',flight_dict)
     await flight_dict.forEach( function (item){
       // console.log('loop',item)
       temp_flight.push(item.id)
     } )
     props.handleFilterFlights(temp_flight)
-    console.log('เป็นรัย2',temp_flight)
+    // console.log('เป็นรัย2',temp_flight)
   }
 
   const search = () => {
@@ -96,6 +96,7 @@ function NavScrollExample(props) {
               <NavDropdown.Item href="#action3" eventKey="2022-12-20">2022-12-20</NavDropdown.Item>
               <NavDropdown.Item href="#action4" eventKey="2022-12-25">2022-12-25</NavDropdown.Item>
               <NavDropdown.Item href="#action4" eventKey="2022-12-13">2022-12-13</NavDropdown.Item>
+              <NavDropdown.Item href="#action4" eventKey="2023-01-12">2023-01-12</NavDropdown.Item>
             </NavDropdown>
             
             {/* <NavDropdown title="S E L E C T - T I M E "  onSelect={handleTimeClick} id="navbarScrollingDropdown"> */}

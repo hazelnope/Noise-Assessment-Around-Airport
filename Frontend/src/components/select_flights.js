@@ -9,7 +9,7 @@ import axios from 'axios';
 function Select_flights(props) {
     const filterFlights = props.filterFlights
     const [value, setValue] = useState([]);
-    const [isLoading, setLoading] = useState(props.isLoading);
+    // const [isLoading, setLoading] = useState(props.isLoading);
 
     const handleChange = (val) => {
         // console.log(val)
@@ -23,16 +23,16 @@ function Select_flights(props) {
     );
 
     useEffect(() => {
-        setLoading(props.isLoading)
+        // setLoading(props.isLoading)
         // console.log("Loading... =>", isLoading, filterFlights, props.filterFlights.length === 0)
         // if (isLoading) {
         //     // setLoading(false);
 
         // }
-    }, [isLoading]);
+    }, );
 
     const handleClick = () => {
-        setLoading(true)
+        // setLoading(true)
         props.handleSelectFlights(value)
         // setLoading(false);
 
@@ -46,10 +46,12 @@ function Select_flights(props) {
 
             {props.filterFlights.length !== 0? <Button
                 variant="primary"
-                disabled={isLoading}
-                onClick={!isLoading ? handleClick : null}
+                // disabled={isLoading}
+                // onClick={!isLoading ? handleClick : null}
+                onClick={handleClick}
             >
-                {isLoading ? 'Loading…' : 'Click to load data'}
+                Click to load data
+                {/* {isLoading ? 'Loading…' : 'Click to load data'} */}
             </Button>:null}
              {/* <Button
                  variant="primary"

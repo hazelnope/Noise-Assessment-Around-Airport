@@ -6,7 +6,7 @@ import * as maptalks from 'maptalks'
 import { Select,Checkbox } from 'antd';
 import PropTypes from 'prop-types';
 import axios from 'axios';
-import { BsFillHandThumbs } from "react-icons/bs";
+
 
 
 
