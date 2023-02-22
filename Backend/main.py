@@ -434,7 +434,7 @@ def filter_flight(item:api_flightID):
 
 
 @app.post('/grid_to_firebase')
-def grid2firebase(date:generate_grid_api):
+async def grid2firebase(date:generate_grid_api):
     date_object = datetime.datetime.strptime(date.date, '%Y-%m-%d')
     timestart = date_object.timestamp()
     timeEnd = (date_object + datetime.timedelta(days=1) ).timestamp()
@@ -446,17 +446,25 @@ def grid2firebase(date:generate_grid_api):
         'error':[],
         'succuss':[]
     }
+    # print('All flight ',flight_dict)
+    # count = 0
     for i in flight_dict:
-        print(i)
+        # break
+        # count +=1
+        # print(count)
+        # print(i)
         name = i['id']
+        print(name)
         doc_ref2 = db.collection('detail_and_grid').document('grid').collection(f'{name}')
         check_exist = doc_ref2.limit(1).stream()
         check_exist = list(check_exist)
         if check_exist != []:
             print('found')
             continue
+        else:
+            print('not found at main')
 
-
+    
         tmp = generate_grid(i['id'], db)
         df_grid = tmp.pop('df', None)
 
@@ -476,8 +484,8 @@ def grid2firebase(date:generate_grid_api):
             print(f'add {i} succuess')
         else:
             result['error'].append(tmp)
-            # print("test", i)
-        break
+            print("error", i)
+        # break
   
 
     return JSONResponse(content=result)

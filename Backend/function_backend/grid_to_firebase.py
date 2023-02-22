@@ -74,15 +74,24 @@ def npd_inter_per_flight(df_param, npd_id):
     npd_of_flight = npd_of_flight[npd_of_flight['Noise Metric'] == 'LAmax']
     npd_of_flight = npd_of_flight[npd_of_flight['Op Mode'] == 'D']
     npd_of_flight.set_index('Power Setting', inplace=True)
-
+    # print(df_param[df_param['Power Setting' ]!=df_param['Power Setting' ]])
+    # print(df_param['Power Setting'].unique())
+    # print(df_param.loc[257])
+    # print('-------------------')
     npd_of_flight = npd_of_flight.reindex(npd_of_flight.index.union(df_param['Power Setting'].unique()))
-    npd_of_flight = npd_of_flight.interpolate(method='index',limit_direction='both',limit=200)
+    # npd_of_flight = npd_of_flight.drop(columns=['NPD_ID','Noise Metric','Op Mode'])
+
+    npd_of_flight = npd_of_flight.interpolate(method='index',limit_direction='both',limit=300)
     
     npd_of_flight = npd_of_flight.drop(columns=['NPD_ID','Noise Metric','Op Mode']).T.reset_index()
+
+    # npd_of_flight = npd_of_flight.T.reset_index()
     npd_of_flight.rename(columns={'index':'distance'},inplace=True)
 
     npd_of_flight['distance'] = npd_of_flight['distance'].apply(get_feet)
     npd_of_flight.set_index('distance',inplace=True)
+    # print(npd_of_flight)
+
     return npd_of_flight
 
 def add_powersetting_2_flight(df_param, df_fixpoint):
@@ -96,11 +105,15 @@ def add_powersetting_2_flight(df_param, df_fixpoint):
     # df__tmp = df__tmp.groupby('Altitude AFE (ft)').max()
     # display(df__tmp)
     # print("before",df__tmp.shape)
+    # print(df_param.groundspeed.unique())
+    # print(df_param[df_param['groundspeed' ]!=df_param['groundspeed' ]])
+
     df__tmp = df__tmp.reindex(df__tmp.index.union(df_param.groundspeed.unique()))
     # df__tmp = df__tmp.reindex(df__tmp.index.union(df_param.altitude.unique()))
     # print("after",df__tmp.shape)
+    # print(df__tmp)
 
-    df__tmp = df__tmp.interpolate(method='index',limit_direction='both',limit=200)
+    df__tmp = df__tmp.interpolate(method='index',limit_direction='both',limit=400)
     df__tmp = df__tmp.reindex(df_param.groundspeed.unique())
     # df__tmp = df__tmp.reindex(df_param.altitude.unique())
     df__tmp.reset_index(drop=False, inplace=True)
@@ -111,7 +124,8 @@ def add_powersetting_2_flight(df_param, df_fixpoint):
 
     # df_param = df_param.merge(df__tmp, how='left', on='altitude')
     df_param = df_param.merge(df__tmp, how='left', on='groundspeed')
-    
+    # print(df_param[df_param['Power Setting' ]!=df_param['Power Setting' ]])
+    # print(df__tmp[df__tmp['Power Setting' ]!=df__tmp['Power Setting' ]])
     return df_param
 
 def create_observerer():
@@ -170,8 +184,8 @@ def Calculate_Grid(observer,df_param, npd_param):
                 lSEL = 10*np.log10( (1/1)*area)
                 # if lSEL != lSEL:
                 #     print('have NAN2')
-                if lSEL <= 40 or lSEL >=85:
-                    print("have ",lSEL)
+                # if lSEL <= 40 or lSEL >=85:
+                #     print("have ",lSEL)
         
             
             #----- add l_dB to observer -----#
@@ -202,20 +216,14 @@ def generate_grid(flight, db):
         doc = doc.to_dict()
         air_type = doc['type']
         df['ACFT_ID'] = air_type
-        # print(air_type)
-        # doc2 = db.collection('NPD_ID').document(f'{air_type}').get()
-        # if doc2.exists:
-        #     doc2 = doc2.to_dict()
-        #     df['NPD_ID'] = doc2['NPD_ID']
-        # else: 
-        #     print('not found NPD : ', flight, ' Aircraf_type : ', air_type)
-        #     return False
-    else: 
-        # print('not found',aircraft)
-        response = requests.get(apiUrl + f"flights/{aircraft}",headers=auth_header)
+        # print('found ACFT_ID', df['ACFT_ID'])
 
+    else: 
+        print('not found',aircraft)
+        response = requests.get(apiUrl + f"flights/{aircraft}",headers=auth_header)
+        # print('resp', response)
         if response.status_code == 200:
-            # print("got aircraft_type")
+            print("got aircraft_type", aircraft)
             aircraft_type = response.json()['flights'][0]['aircraft_type']
             
             #----- get engine data from aircraft_type -----#
@@ -232,11 +240,13 @@ def generate_grid(flight, db):
                 doc_ref = db.collection(f'aircraft_engine').document(f'{aircraft}')
                 doc_ref.set(engine_data)
             else:
+                # print("this error")
                 result_func['status'] =0
                 result_func['message'] = 'Error executing request'
                 return result_func  
                 
-            df['ACFT_ID'] = aircraft
+            # df['ACFT_ID'] = aircraft
+            df['ACFT_ID'] = engine_data['type']
 
         else:
             result_func['message'] = 'Error executing request'
@@ -274,6 +284,8 @@ def generate_grid(flight, db):
     df['df_fix_point'] = df_fix_point[df_fix_point.ACFT_ID == aircraft_type]
     df['df_fix_point'] = df['df_fix_point'].reset_index(drop=True)
     #----- add power setting to df -----#
+    # print(df['df'])
+    df['df'] = df['df'].dropna()
     df['df'] = add_powersetting_2_flight(df['df'], df['df_fix_point'])
     
     # #########################
@@ -282,8 +294,8 @@ def generate_grid(flight, db):
     # df['df'].to_csv('check_power.csv')
 
     #----- get NPD table -----#
+    # print(df['NPD_ID'])
     df['npd'] = npd_inter_per_flight(df['df'], df['NPD_ID'])
-    
     #----- create grid [lat, long, 0] -----#
     df['grid'] = create_observerer()
 
