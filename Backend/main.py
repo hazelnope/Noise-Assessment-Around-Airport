@@ -135,15 +135,18 @@ async def create_date_range(date_range: DateRange):
     response = requests.get(apiUrl + f"airports/{Airport_id}/flights/departures?start={Airport_start}&end={Airport_end}&max_pages=4",
     headers=auth_header)
     
+    #----- api_to_db -----#
+    Showflights = []
+    
     Departures_FlightID = []
     counter = 0
     for i in response.json()['departures']:
-        # if counter == 3:
-        #     break
-        counter += 1
+        if counter == 2:
+            break
+        # counter += 1
         if 'schedule' in i['fa_flight_id']:
             Departures_FlightID.append(i['fa_flight_id'])
-            # counter += 1
+            counter += 1
 
     # print(Departures_FlightID)
 
@@ -238,14 +241,17 @@ async def create_date_range(date_range: DateRange):
             doc_ref.set({
                 'date': int(Dict_departures_flights[day_night][flight].iloc[0].timestamp.floor(freq='H').timestamp()),
                 'id':flight,
-                'period':day_night
+                'period':day_night,
+                'D_or_A':'D'
             })
             postdata = Dict_departures_flights[day_night][flight].to_dict('records')
             list(map(lambda x: doc_ref2.add(x), postdata))
+            Showflights.append(flight)
             print('insert success', flight)
        
 
-    return {"response": f'Insert successful','status_code':200}
+    # return {"response": f'Insert successful','status_code':200}
+    return {"res": Showflights}
     # return {"None":Dict_departures_flights}
 
 
@@ -427,21 +433,25 @@ def filter_flight(item:api_flightID):
         period = item.period
     # print(param_date+3600)
     # doc_ref = db.collection('filter_flight').where('period','==',period).where('date','==',param_date).limit(3)
-    doc_ref = db.collection('filter_flight').where('date','>=',param_date).where('date','<',param_date+10800).limit(3)
+    doc_ref = db.collection('filter_flight').where('date','>=',param_date).where('date','<',param_date+10800)
     docs = list(doc_ref.stream())
     flight_dict = list(map(lambda x: x.to_dict(), docs))
     return {'res':flight_dict}
 
 
 @app.post('/grid_to_firebase')
-async def grid2firebase(date:generate_grid_api):
-    date_object = datetime.datetime.strptime(date.date, '%Y-%m-%d')
-    timestart = date_object.timestamp()
-    timeEnd = (date_object + datetime.timedelta(days=1) ).timestamp()
-    doc_ref = db.collection('filter_flight').where('date','>=',timestart).where('date','<',timeEnd)
-    docs = list(doc_ref.stream())
-    flight_dict = list(map(lambda x: x.to_dict(), docs))
-    flight_list = []
+def grid2firebase(date:generate_grid_api):
+    # date_object = datetime.datetime.strptime(date.date, '%Y-%m-%d')
+    # timestart = date_object.timestamp()
+    # timeEnd = (date_object + datetime.timedelta(days=1) ).timestamp()
+    # doc_ref = db.collection('filter_flight').where('date','>=',timestart).where('date','<',timeEnd)
+    # docs = list(doc_ref.stream())
+    # flight_dict = list(map(lambda x: x.to_dict(), docs))
+
+    flight_dict = [{'id':'AIQ3102-1670715240-schedule-0556'},{'id':'AIQ311-1670716320-schedule-0614'},{'id':'AIQ3029-1670715240-schedule-0553'}]
+    # {'id':'AIQ3029-167075240-schedule-0553'},
+
+
     result = {
         'error':[],
         'succuss':[]
@@ -466,6 +476,7 @@ async def grid2firebase(date:generate_grid_api):
 
     
         tmp = generate_grid(i['id'], db)
+
         df_grid = tmp.pop('df', None)
 
         # if tmp['status'] == 0:
@@ -584,8 +595,8 @@ def flight_path(item:list_flight):
             for j in range(len(df_cumu[list(df_cumu.keys())[0]]['grid'])):
                 LDN = 0
                 for key in df_cumu.keys():
-                    LDN = LDN + Cumulative_model(df_cumu[key]['period'], df_cumu[key]['grid'].iloc[i, j])
-                    # LDN = LDN + Cumulative_model(df_cumu[key]['period'], df_cumu[key]['grid'].iloc[i, j], duration_day, duration_night)
+                    # LDN = LDN + Cumulative_model(df_cumu[key]['period'], df_cumu[key]['grid'].iloc[i, j])
+                    LDN = LDN + Cumulative_model(df_cumu[key]['period'], df_cumu[key]['grid'].iloc[i, j], item.duration_day, item.duration_night)
                 cumu_value[i][j] = 10*np.log10( (t0 / T0) * LDN )
         
         #----- set value to [long, lat, value] format -----#

@@ -10,6 +10,7 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 import sys
 import requests
+from sklearn.linear_model import LinearRegression
 
  
 sys.path.append('./../Backend/')
@@ -23,7 +24,7 @@ change_type = {
     "A320"      : "727200",
     # "737-800"   : "737800",
     "737-800"   : "727200",
-    "737-900"   : "737800",
+    "737-900"   : "727200",
     "Dash 8-400" : "727200"
 }
 
@@ -38,14 +39,14 @@ size = 40
 
 
 #----- read fix_point to get power setting -----#
-df_fix_point = pd.read_csv('./../Preprocess/data/ANP2.2_Default_fixed_point_profiles.csv',delimiter=';', skiprows=[0])
+# df_fix_point = pd.read_csv('./../Preprocess/data/ANP2.2_Default_fixed_point_profiles.csv',delimiter=';', skiprows=[0])
 # df_fix_point = pd.read_csv('./../Preprocess/data/ANP2.2_Default_fixed_point_profiles.csv',delimiter=';')
 
-df_fix_point = df_fix_point[df_fix_point['Stage Length'] == 1]
-df_fix_point = df_fix_point[df_fix_point['Op Type'] == "D"]
+# df_fix_point = df_fix_point[df_fix_point['Stage Length'] == 1]
+# df_fix_point = df_fix_point[df_fix_point['Op Type'] == "D"]
 
 #----- read NPD to get L(dB) by [power setting - distance]-----#
-npd = pd.read_csv('./../Preprocess/data/ANP2.2_NPD_data.csv',delimiter=';', skiprows=[0])
+# npd = pd.read_csv('./../Preprocess/data/ANP2.2_NPD_data.csv',delimiter=';', skiprows=[0])
 
 
 
@@ -69,7 +70,7 @@ def get_feet(distance):
     feet = distance.split('_')[1]
     return float(feet[:-2])
 
-def npd_inter_per_flight(df_param, npd_id):
+def npd_inter_per_flight(df_param, npd_id,npd):
     npd_of_flight = npd[npd['NPD_ID'] == npd_id]
     npd_of_flight = npd_of_flight[npd_of_flight['Noise Metric'] == 'LAmax']
     npd_of_flight = npd_of_flight[npd_of_flight['Op Mode'] == 'D']
@@ -80,8 +81,9 @@ def npd_inter_per_flight(df_param, npd_id):
     # print('-------------------')
     npd_of_flight = npd_of_flight.reindex(npd_of_flight.index.union(df_param['Power Setting'].unique()))
     # npd_of_flight = npd_of_flight.drop(columns=['NPD_ID','Noise Metric','Op Mode'])
-
-    npd_of_flight = npd_of_flight.interpolate(method='index',limit_direction='both',limit=300)
+    # npd_of_flight = npd_of_flight.dropna()
+    # print(npd_of_flight)
+    npd_of_flight = npd_of_flight.interpolate(method='index',limit_direction='both',limit=400)
     
     npd_of_flight = npd_of_flight.drop(columns=['NPD_ID','Noise Metric','Op Mode']).T.reset_index()
 
@@ -140,6 +142,30 @@ def create_observerer():
     lat_start =  13.831475
     return observer
 
+def cal_noise_model(npd_param, distance, power_setting):
+    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+    # print(npd_param, distance, power_setting)
+    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+    x = npd_param.index.values.reshape(-1, 1)
+    # y = npd_param[f'{power_setting}'].values.reshape(-1, 1)    
+
+    y = npd_param[power_setting].values.reshape(-1, 1)    
+
+    x_inv_square = 1 / (x**2)
+    x_transformed = np.c_[x, x_inv_square]
+    reg = LinearRegression().fit(x_transformed, y)
+    
+    x_pred_inv_square = 1 / (distance**2)
+    x_pred_transformed = np.c_[distance, x_pred_inv_square]
+    y_pred = reg.predict(x_pred_transformed)
+
+    result = y_pred[0][0]
+    if result < 0:
+        result = 0
+        
+    return result
+
+
 def Calculate_Grid(observer,df_param, npd_param):
     # npd_after_inter = npd_param.copy()
     for i in range(len(observer)):
@@ -158,18 +184,23 @@ def Calculate_Grid(observer,df_param, npd_param):
                 tmp.loc[index, 'distance'] = distance
             
             #----- calculate L_dB from powersetting & distance -> copy to model_data -----#
-            npd_after_inter = npd_param.reindex(npd_param.index.union(tmp_distance))
-            # npd_after_inter = npd_after_inter.reindex(npd_after_inter.index.union(tmp_distance))
-            npd_after_inter = npd_after_inter.interpolate(method='index',limit_direction='both',limit=200)
-            model_data = npd_after_inter.copy()
-            # display(model_data)
+            # for index, row in tmp.iterrows():
+            #     nop = cal_noise_model(npd_param, row['distance'], row['Power Setting'])
+            tmp['sound'] =  tmp.apply(lambda row: cal_noise_model(npd_param, row['distance'], row['Power Setting']),axis=1)
+            # print(tmp)
+            # return
+            # npd_after_inter = npd_param.reindex(npd_param.index.union(tmp_distance))
+
+            # npd_after_inter = npd_after_inter.interpolate(method='index',limit_direction='both',limit=200)
+            # model_data = npd_after_inter.copy()
+
             
             #----- add L_dB to df['sound'] & select -----#
-            for index, row in tmp.iterrows():
-                tmp.loc[index,'sound'] = model_data.loc[row.distance,row['Power Setting']]
-                # print(tmp.loc[index,'sound'])
-                if tmp.loc[index,'sound'] != tmp.loc[index,'sound']:
-                    tmp.loc[index,'sound'] = 0
+            # for index, row in tmp.iterrows():
+            #     tmp.loc[index,'sound'] = model_data.loc[row.distance,row['Power Setting']]
+
+            #     if tmp.loc[index,'sound'] != tmp.loc[index,'sound']:
+            #         tmp.loc[index,'sound'] = 0
 
             
             #----- Single Sound Event Model -----#
@@ -197,6 +228,19 @@ def Calculate_Grid(observer,df_param, npd_param):
 
 def generate_grid(flight, db):
     df = {}
+    # get npd from firestore
+    npd_ref = db.collection(f'ANP_sound')
+    npd_docs = list(npd_ref.stream())
+    npd_dict = list(map(lambda x: x.to_dict(), npd_docs))
+    npd = pd.DataFrame(npd_dict)
+    # get fix point
+    fixed_point_ref = db.collection(f'fixed_point_profiles')
+    fixed_point_docs = list(fixed_point_ref.stream())
+    fixed_point_dict = list(map(lambda x: x.to_dict(), fixed_point_docs))
+    df_fix_point = pd.DataFrame(fixed_point_dict)
+    df_fix_point = df_fix_point[df_fix_point['Stage Length'] == 1]
+    df_fix_point = df_fix_point[df_fix_point['Op Type'] == "D"]
+
 
     result_func = {
     'status':1,
@@ -205,8 +249,11 @@ def generate_grid(flight, db):
     
     doc_ref = db.collection('detail_and_grid').document('detail').collection(f'{flight}').order_by("timestamp")
     docs = list(doc_ref.stream())
+    # print(docs)
     flight_dict = list(map(lambda x: x.to_dict(), docs))
     df['df'] = pd.DataFrame(flight_dict)
+    # print(f'flight -> {flight}')
+    # print('-------------------------------------- here --------',df['df'])
     
     #----- set air_type, NPD_ID -----#
     aircraft = flight.split('-')[0]
@@ -224,6 +271,11 @@ def generate_grid(flight, db):
         # print('resp', response)
         if response.status_code == 200:
             print("got aircraft_type", aircraft)
+            # print('resp', response.json()['flights'])
+            if response.json()['flights'] == [] :
+                result_func['status'] =0
+                result_func['message'] = f'FlightAware got no data about {aircraft}'
+                return result_func
             aircraft_type = response.json()['flights'][0]['aircraft_type']
             
             #----- get engine data from aircraft_type -----#
@@ -284,25 +336,28 @@ def generate_grid(flight, db):
     df['df_fix_point'] = df_fix_point[df_fix_point.ACFT_ID == aircraft_type]
     df['df_fix_point'] = df['df_fix_point'].reset_index(drop=True)
     #----- add power setting to df -----#
-    # print(df['df'])
+    # print('-------------------------------------- here --------',df['df'])
     df['df'] = df['df'].dropna()
+    # print('here',df['df'])
+
     df['df'] = add_powersetting_2_flight(df['df'], df['df_fix_point'])
-    
+    # df['df'] = df['df'].dropna()
+
     # #########################
-    # display(df['df'])
+    # print('here',df['df'].isna().sum())
     # return df['df']
     # df['df'].to_csv('check_power.csv')
 
     #----- get NPD table -----#
     # print(df['NPD_ID'])
-    df['npd'] = npd_inter_per_flight(df['df'], df['NPD_ID'])
+    df['npd'] = npd_inter_per_flight(df['df'], df['NPD_ID'], npd)
     #----- create grid [lat, long, 0] -----#
     df['grid'] = create_observerer()
 
-
+    # print('aaaaaa',df['df'])
     #----- get grid from calculate_Grid -----#
     df['grid'] = Calculate_Grid(df['grid'], df['df'], df['npd'])
-    
+
     #----- TO PIVOT TABLE -----#
     df_tmp = pd.DataFrame(columns = ['Lat','Long','L_dB'])
 
