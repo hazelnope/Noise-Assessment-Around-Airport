@@ -7,7 +7,6 @@ import { Select, Checkbox, Button } from 'antd';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import { url } from './../config';
-// import { Marker } from 'google-maps-React';
 
 
 
@@ -22,11 +21,18 @@ var map = {
     altitudeScale: 1,
     pitch: 45,
     bearing: 15,
+    // baseLayer: new maptalks.TileLayer('base', {
+    //     // urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',   //อันเดิมสีขาว
+    //     urlTemplate: "https://stamen-tiles.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.png",
+    //     subdomains: ['a', 'b', 'c', 'd'],
+    //     attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
+    // }),
+
     baseLayer: new maptalks.TileLayer('base', {
-        urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-        subdomains: ['a', 'b', 'c', 'd'],
-        attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
-    }),
+        urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        subdomains: ['a', 'b', 'c'],
+        attribution: '&copy; OpenStreetMap contributors'
+    })
 }
 
 
@@ -56,33 +62,33 @@ const My_test_map = (props) => {
     const [scatter, setScatter] = useState(test_scatter)
     const [paramFlight, setParamFlight] = useState(props.flightsData)
     const [gridData, setGridData] = useState([])
-    const [userLat, setUserLat] = useState(props.userLat)
-    const [userLong, setUserLong] = useState(props.userLong)
-
+    const [markerPoint, setMarkerPoint] = useState([[0, 0, 0]])
 
 
     const getOption = () => ({
+
         maptalks3D: map,
 
+
         visualMap: {
-            max: 90,
+            max: 100,
             inRange: {
                 color: [
-                    // '#1aa450',
-                    // '#1aa450',
-                    // '#45c03c',
-                    // '#82d235',
-                    // '#a7df40',
-                    // '#cddd3e',
-                    // '#dfd43e',
-                    // '#e0b13f',
-                    // '#e0a231',
-                    // '#de8618',
-                    // '#d46412',
-                    // '#dc4413',
-                    // '#de3a17',
-                    // '#e02514',
-                    // '#d01715',
+                    '#1aa450',
+                    '#1aa450',
+                    '#45c03c',
+                    '#82d235',
+                    '#a7df40',
+                    '#cddd3e',
+                    '#dfd43e',
+                    '#e0b13f',
+                    '#e0a231',
+                    '#de8618',
+                    '#d46412',
+                    '#dc4413',
+                    '#de3a17',
+                    '#e02514',
+                    '#d01715',
 
                     //อันใหม่
                     // '#1aa450', //0
@@ -94,12 +100,12 @@ const My_test_map = (props) => {
                     // '#ed472d', //90
 
                     //อันหใม่กว่า
-                    '#1aa450', //0
-                    '#4ded2d', //18
-                    '#4ded2d', //36
-                    '#4ded2d', //54
-                    '#eda02d', //72
-                    '#ed472d', //90
+                    // '#1aa450', //0
+                    // '#4ded2d', //18
+                    // '#4ded2d', //36
+                    // '#4ded2d', //54
+                    // '#eda02d', //72
+                    // '#ed472d', //90
                 ]
             }
         },
@@ -124,29 +130,29 @@ const My_test_map = (props) => {
                     position: 'insideTop'
                 },
             },
-            {
-                name: 'Custom Marker',
-                type: 'scatter3D',
-                coordinateSystem: 'maptalks3D',
-                itemStyle: {
-                    normal: {
-                      color: '#ddb926',
-                      opacity: '1'
-                    }
-                  },
-                data: scatter,
-                symbolSize: 20,
-                label: {
-                    normal: {
-                      formatter: '{b}',
-                      position: 'right',
-                      show: false
-                    },
-                    emphasis: {
-                      show: true
-                    }
-                  },
-            },
+            // {
+            //     name: 'Custom Marker',
+            //     type: 'scatter3D',
+            //     coordinateSystem: 'maptalks3D',
+            //     itemStyle: {
+            //         normal: {
+            //           color: '#ddb926',
+            //           opacity: '1'
+            //         }
+            //       },
+            //     data: markerPoint,
+            //     symbolSize: 20,
+            //     label: {
+            //         normal: {
+            //           formatter: '{b}',
+            //           position: 'right',
+            //           show: false
+            //         },
+            //         emphasis: {
+            //           show: true
+            //         }
+            //       },
+            // },
             {
                 type: 'lines3D',
                 coordinateSystem: 'maptalks3D',
@@ -182,21 +188,52 @@ const My_test_map = (props) => {
                     },
                 },
                 itemStyle: {
-                    opacity: 0.2
+                    opacity: 0.15
                 },
                 emphasis: {
                     label: {
-                        opacity: 0.8,
+                        // opacity: 0.8,
+                        opacity: 1,
                         fontSize: 20,
-                        color: '#001855',
+                        color: '#000000',
                     },
                     itemStyle: {
-                        color: '#001855'
+                        color: '#000000'
                     },
+                }
+            },
+            {
+                name: 'Custom Marker',
+                type: 'bar3D',
+                coordinateSystem: 'maptalks3D',
+                data: markerPoint,
+                shading: 'realistic',
+                barSize: 1.49,
+                // barSize: 50,
+                // minHeight: 0,
+                // maxHeight: 300,
+                label: {
+                    fontSize: 20,
+                    show: true,
+                    color: '#000000',
+                    formatter: function (data) {
+                        // return parseFloat(data.data[2]/10).toFixed(2);
+                        return parseFloat(data.data[2]).toFixed(2);
+                    }
+                },
+                itemStyle: {
+                    opacity: 1,
+                },
+                emphasis:{
+                    itemStyle: {
+                        // Color in emphasis state.
+                        color: 'thistle'
+                      }
                 }
             }
         ],
     });
+
 
 
 
@@ -206,7 +243,6 @@ const My_test_map = (props) => {
         // var data_scatter = []
         // console.log('resulttttt', result)
         console.log('resulttttt', result)
-        // setData(result)
         setData([])
         setScatter([])
         for (const flight in result) {
@@ -219,27 +255,72 @@ const My_test_map = (props) => {
             let itr_dict = {}
             itr_dict['coords'] = result[flight].value
             itr_dict['name'] = result[flight].id
-            // console.log('flight', flight)
-            // console.log(result[flight].value)
-            // console.log('dicts', itr_dict)
             setData(previousState => [...previousState, itr_dict])
         }
-        // console.log("Data", data)
+    }
+
+    function toRadians(degrees) {
+        return degrees * Math.PI / 180;
+    }
+
+    function distance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // radius of the earth in km
+        const dLat = toRadians(lat2 - lat1);
+        const dLon = toRadians(lon2 - lon1);
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const d = R * c;
+        return d;
+    }
+    // const coords = [[13.895474999999992, 100.64999700000016], [13.935474999999988, 100.56599700000005]];
+    const coords = gridData;
+
+    function shortest_point() {
+        let minDistance = null;
+        let minCoord = null;
+        console.log('lat long2',props.userLat,props.userLong)
+        if (props.userLat === null || props.userLat > 13.99 || props.userLat < 13.83 || props.userLong > 100.69 || props.userLong < 100.52) {
+            return [0, 0, 0]
+        }
+        let cor = [props.userLat, props.userLong];
+
+        // for (let i = 0; i < coords.length; i++) {
+        for (let i = 0; i < gridData.length; i++) {
+            const coord = gridData[i];
+            const d = distance(cor[0], cor[1], coord[1], coord[0]);
+            if (minDistance === null || d < minDistance) {
+                minDistance = d;
+                minCoord = coord;
+            }
+        }
+        return minCoord;
     }
 
 
+
     useEffect(() => {
-        // setParamFlight(props.flightsData)
-        // console.log('param', paramFlight)
-        // axios.get(url+'get_flight').then((response) => {
-        //     // console.log(response.data);
-        //     test_data.push(response.data);
-        //     getData(test_data)
-        //   })
-        //   .catch((error) => {
-        //     console.log(error)
-        //   });
-        // console.log("type ", typeof getOption)
+        console.log('lat long',props.userLat,props.userLong)
+        console.log("marker", markerPoint);
+
+        if (props.userLong !== 0 && props.userLat !== 0) {
+            // console.log("marker", markerPoint);
+            let point_A = shortest_point();
+
+            // setMarkerPoint([[point_A[0], point_A[1], point_A[2]*10]])
+            setMarkerPoint([point_A])
+        }
+        else{
+            setMarkerPoint([[0, 0, 0]])
+        }
+
+
+    }, [props.userLong, props.userLat]);
+
+
+
+    useEffect(() => {
         const fetchData = async () => {
             console.log('working....')
             setParamFlight(props.flightsData)
@@ -250,23 +331,34 @@ const My_test_map = (props) => {
             }).catch((error) => {
                 console.log("error ->", error)
             });
-            getData(response.data.res)
-            console.log('response ', response.data);
-            // console.log('grid', response.data.res[0].grid)
             setGridData(response.data.cumu_grid)
-            // setGridData(response.data.res[0].grid)
-            // props.handleLoading(false);
-
+            props.handleGridForExport(response.data.cumu_grid)
+            getData(response.data.res)
+            // console.log('response ', response.data);
+            console.log('grid_nop:', gridData);
         }
-        fetchData()
-
+        fetchData();
 
     }, [props.flightsData])
+
+    useEffect(() => {
+        if (gridData.length !== 0) {
+            // console.log('show')
+            props.handleShowLatLong(1)
+        }
+        else {
+            // console.log('not show')
+            props.handleLatitudeChange(null)
+            props.handleLongitudeChange(null)
+            props.handleShowLatLong(0)
+        }
+    }, [gridData]);
 
     return (
         <div>
             <ReactEcharts option={getOption()} notMerge={true}
                 lazyUpdate={true} style={{ width: '100%', height: 800, border: '1px solid lightgray' }} />
+
 
         </div>
     );

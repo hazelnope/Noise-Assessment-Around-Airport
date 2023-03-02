@@ -1,223 +1,223 @@
-import React, { createRef, useEffect } from "react";
-import ReactEcharts from 'echarts-for-react';
-import 'echarts-gl'
-import 'mapbox-echarts'
-import * as maptalks from 'maptalks'
-import { Select,Checkbox } from 'antd';
-import PropTypes from 'prop-types';
-import axios from 'axios';
+// import React, { createRef, useEffect } from "react";
+// import ReactEcharts from 'echarts-for-react';
+// import 'echarts-gl'
+// import 'mapbox-echarts'
+// import * as maptalks from 'maptalks'
+// import { Select,Checkbox } from 'antd';
+// import PropTypes from 'prop-types';
+// import axios from 'axios';
 
 
 
 
-const { Option } = Select;
+// const { Option } = Select;
 
-// var test_data = [{
-//     name:'aa',
-//     coords: [[100.5971, 13.8989, 700], [100.5837, 13.8755, 1700], [100.5572, 13.8620, 2400]],
-//     date:'2022-10-04',
-//     time_1:'17:23:06',
-//     time_2:'17:24:10',
-//     week:'1'
-// },{
-//     name:'aa',
-//     coords: [[100.5971, 13.8989, 700], [100.5837, 13.8755, 1000], [100.5572, 13.8620, 2000]],
-//     date:'2022-10-04',
-//     time_1:'17:23:06',
-//     time_2:'17:24:10',
-//     week:'1'
-// }]
+// // var test_data = [{
+// //     name:'aa',
+// //     coords: [[100.5971, 13.8989, 700], [100.5837, 13.8755, 1700], [100.5572, 13.8620, 2400]],
+// //     date:'2022-10-04',
+// //     time_1:'17:23:06',
+// //     time_2:'17:24:10',
+// //     week:'1'
+// // },{
+// //     name:'aa',
+// //     coords: [[100.5971, 13.8989, 700], [100.5837, 13.8755, 1000], [100.5572, 13.8620, 2000]],
+// //     date:'2022-10-04',
+// //     time_1:'17:23:06',
+// //     time_2:'17:24:10',
+// //     week:'1'
+// // }]
 
-var test_data = []
+// var test_data = []
 
-var test_scatter = [[100.5971, 13.8989, 15, "AAA111"]]
-// var test_scatter = [[100.5971, 13.8989, 15, ▄]]
+// var test_scatter = [[100.5971, 13.8989, 15, "AAA111"]]
+// // var test_scatter = [[100.5971, 13.8989, 15, ▄]]
 
-// var test_radar = [[100.5971, 13.8989]]
-var test_radar = [{
-        name:'aa',
-        coords: [[100.5971, 13.8989, 1], [100.5837, 13.8755, 1], [100.5572, 13.8620, 1], [100.5400, 13.8555, 1], [100.5971, 13.8989, 1]],
-        date:'2022-10-04',
-        time_1:'17:23:06',
-        time_2:'17:24:10',
-        week:'1'
-    }]
+// // var test_radar = [[100.5971, 13.8989]]
+// var test_radar = [{
+//         name:'aa',
+//         coords: [[100.5971, 13.8989, 1], [100.5837, 13.8755, 1], [100.5572, 13.8620, 1], [100.5400, 13.8555, 1], [100.5971, 13.8989, 1]],
+//         date:'2022-10-04',
+//         time_1:'17:23:06',
+//         time_2:'17:24:10',
+//         week:'1'
+//     }]
 
-var map = {
-    center: [100.6042,13.9133], 
-    zoom: 13,
-    altitudeScale: 100,
-    pitch: 45,
-    bearing: 15,
-    baseLayer: new maptalks.TileLayer('base', {
-        urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-        subdomains: ['a','b','c','d'],
-        attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
-    }),
-}
+// var map = {
+//     center: [100.6042,13.9133], 
+//     zoom: 13,
+//     altitudeScale: 100,
+//     pitch: 45,
+//     bearing: 15,
+//     baseLayer: new maptalks.TileLayer('base', {
+//         urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+//         subdomains: ['a','b','c','d'],
+//         attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
+//     }),
+// }
 
-const url = 'http://localhost:8000/';
+// const url = 'http://localhost:8000/';
 
-class Map extends React.Component {
+// class Map extends React.Component {
 
-    constructor(props) {
-        super(props);
-        this.state = {
-            data : test_data,
-            checkedList: [],
-            list: [],
-            scatter: test_scatter,
-            radar: test_radar
-        };
-        this.date = props.selectDate
-        this.time = props.selectTime
-        this.flight = props.data
-        this.check = props.name
-        this.what = props.what
+//     constructor(props) {
+//         super(props);
+//         this.state = {
+//             data : test_data,
+//             checkedList: [],
+//             list: [],
+//             scatter: test_scatter,
+//             radar: test_radar
+//         };
+//         this.date = props.selectDate
+//         this.time = props.selectTime
+//         this.flight = props.data
+//         this.check = props.name
+//         this.what = props.what
 
-        this.getData = this.getData.bind(this);
-    }
+//         this.getData = this.getData.bind(this);
+//     }
 
-    componentWillMount(){
-        console.log('Date => ',this.state.date)
-        if(this.what === "Flight no"){
-            this.getData(this.flight)
-        }
-        // axios.get(url+'get_flight').then((response) => {
-        //     console.log(response.data);
-        //     test_data.push(response.data);
-        //     this.getData(test_data)
-        //   })
-        //   .catch((error) => {
-        //     console.log(error)
-        //   });
-        // axios.post(url+'get_flight',{
-        //     'date': this.date
-        // }).then((response) => {
-        //     // console.log(response.data.res[0]['value']);
-        //     test_data.push(response.data.res[0]['value']);
-        //     this.getData(test_data)
-        //     console.log(test_data)
-        //   })
-        //   .catch((error) => {
-        //     console.log("error ->",error)
-        //   });
+//     componentWillMount(){
+//         console.log('Date => ',this.state.date)
+//         if(this.what === "Flight no"){
+//             this.getData(this.flight)
+//         }
+//         // axios.get(url+'get_flight').then((response) => {
+//         //     console.log(response.data);
+//         //     test_data.push(response.data);
+//         //     this.getData(test_data)
+//         //   })
+//         //   .catch((error) => {
+//         //     console.log(error)
+//         //   });
+//         // axios.post(url+'get_flight',{
+//         //     'date': this.date
+//         // }).then((response) => {
+//         //     // console.log(response.data.res[0]['value']);
+//         //     test_data.push(response.data.res[0]['value']);
+//         //     this.getData(test_data)
+//         //     console.log(test_data)
+//         //   })
+//         //   .catch((error) => {
+//         //     console.log("error ->",error)
+//         //   });
 
-    }
+//     }
 
-    //---------- selected function-------------//
+//     //---------- selected function-------------//
 
-    onhandleChange(value,data) {
-        var data_select = []
-        var data_scatter = []
-        // var data_radar = []
-        this.setState({checkedList : value})
-        for(var j=0;j<value.length;j++){
-            for(var i=0;i<data.length;i++){
-                if(data[i].name === value[j]){
-                    var state = Math.floor((data[i].coords.length)/2)
-                    data_select.push(data[i])
-                    data_scatter.push([data[i].coords[state][0],data[i].coords[state][1],data[i].coords[state][2],data[i].name])
-                }
-            }
-        }
-        this.setState({data : data_select,scatter:data_scatter})
-    }
+//     onhandleChange(value,data) {
+//         var data_select = []
+//         var data_scatter = []
+//         // var data_radar = []
+//         this.setState({checkedList : value})
+//         for(var j=0;j<value.length;j++){
+//             for(var i=0;i<data.length;i++){
+//                 if(data[i].name === value[j]){
+//                     var state = Math.floor((data[i].coords.length)/2)
+//                     data_select.push(data[i])
+//                     data_scatter.push([data[i].coords[state][0],data[i].coords[state][1],data[i].coords[state][2],data[i].name])
+//                 }
+//             }
+//         }
+//         this.setState({data : data_select,scatter:data_scatter})
+//     }
 
-    getData(result){
-        this.setState({data : result})
-    }
+//     getData(result){
+//         this.setState({data : result})
+//     }
 
-    //-----------draw chart-------------//
+//     //-----------draw chart-------------//
 
-    getOption = () => ({
-        maptalks3D: map, 
-        series: [
-            {
-                type: 'scatter3D',
-                coordinateSystem: 'maptalks3D',
-                itemStyle: {
-                    color: '(255, 0, 0)',
-                    opacity: 1
-                },
-                data: this.state.scatter,
-                symbolSize: 1,
-                label: {
-                    show: true,
-                    formatter: function (data) {
-                        return data[3];
-                    },
-                    position: 'insideTop'
-                },
-            },
-            {
-                type: 'lines3D',
-                coordinateSystem: 'maptalks3D',
-                effect: {
-                    show: false,
-                    constantSpeed: 40,
-                    trailWidth: 2,
-                    trailLength: 0.05,
-                    trailOpacity: 1,
-                },
-                polyline: true,
-                lineStyle: {
-                    width: 2,
-                    color: 'rgb(50, 60, 170)',
-                    opacity: 0.5
-                },
-                data: this.state.data 
-            },
-            // {
-            //     type: 'lines3D',
-            //     coordinateSystem: 'maptalks3D',
-            //     polyline: true,
-            //     lineStyle: {
-            //         width: 2,
-            //         color: 'rgb(255, 0, 0)',
-            //         opacity: 0.5
-            //     },
-            //     // pointSize: 5,
-            //     // blurSize: 6,
-            //     data: this.state.radar
-            // }
-        ],
-    });
+//     getOption = () => ({
+//         maptalks3D: map, 
+//         series: [
+//             {
+//                 type: 'scatter3D',
+//                 coordinateSystem: 'maptalks3D',
+//                 itemStyle: {
+//                     color: '(255, 0, 0)',
+//                     opacity: 1
+//                 },
+//                 data: this.state.scatter,
+//                 symbolSize: 1,
+//                 label: {
+//                     show: true,
+//                     formatter: function (data) {
+//                         return data[3];
+//                     },
+//                     position: 'insideTop'
+//                 },
+//             },
+//             {
+//                 type: 'lines3D',
+//                 coordinateSystem: 'maptalks3D',
+//                 effect: {
+//                     show: false,
+//                     constantSpeed: 40,
+//                     trailWidth: 2,
+//                     trailLength: 0.05,
+//                     trailOpacity: 1,
+//                 },
+//                 polyline: true,
+//                 lineStyle: {
+//                     width: 2,
+//                     color: 'rgb(50, 60, 170)',
+//                     opacity: 0.5
+//                 },
+//                 data: this.state.data 
+//             },
+//             // {
+//             //     type: 'lines3D',
+//             //     coordinateSystem: 'maptalks3D',
+//             //     polyline: true,
+//             //     lineStyle: {
+//             //         width: 2,
+//             //         color: 'rgb(255, 0, 0)',
+//             //         opacity: 0.5
+//             //     },
+//             //     // pointSize: 5,
+//             //     // blurSize: 6,
+//             //     data: this.state.radar
+//             // }
+//         ],
+//     });
   
-    render(props) {
-      return (
+//     render(props) {
+//       return (
         
-        <div>
-            <button onClick={() => (
-            console.log(this.state.date)
-            )}>
-            log date
-            </button>
-            {this.what === "Date" ?
-            <Select
-                mode="multiple"
-                style={{ width: '50%',marginBottom:'2%' }}
-                placeholder="Please select flight"
-                value={this.state.checkedList}
-                onChange={e => this.onhandleChange(e,this.flight)}
-            >
-                {this.check.map(flight => (
-                        <Option style={{ fontSize: "1rem" }} key={flight}>{flight}</Option>
-                ))}
-            </Select>
-            :
-                null
-            }
-                <ReactEcharts option={this.getOption()} style={{width:'100%', height:800, border:'1px solid lightgray'}} />
-        </div>
-      );
-    }
-  }
+//         <div>
+//             <button onClick={() => (
+//             console.log(this.state.date)
+//             )}>
+//             log date
+//             </button>
+//             {this.what === "Date" ?
+//             <Select
+//                 mode="multiple"
+//                 style={{ width: '50%',marginBottom:'2%' }}
+//                 placeholder="Please select flight"
+//                 value={this.state.checkedList}
+//                 onChange={e => this.onhandleChange(e,this.flight)}
+//             >
+//                 {this.check.map(flight => (
+//                         <Option style={{ fontSize: "1rem" }} key={flight}>{flight}</Option>
+//                 ))}
+//             </Select>
+//             :
+//                 null
+//             }
+//                 <ReactEcharts option={this.getOption()} style={{width:'100%', height:800, border:'1px solid lightgray'}} />
+//         </div>
+//       );
+//     }
+//   }
 
-  Map.propTypes = {
-    data: PropTypes.array,
-    name: PropTypes.array,
-    what: PropTypes.string
-  };
+//   Map.propTypes = {
+//     data: PropTypes.array,
+//     name: PropTypes.array,
+//     what: PropTypes.string
+//   };
   
-  export default Map;
+//   export default Map;

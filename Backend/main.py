@@ -16,6 +16,8 @@ import datetime
 import os
 import glob
 import itertools
+from typing import List
+import pytz
 
 from function_backend.grid_to_firebase import generate_grid
 from function_backend.cumulative_level import Cumulative_model
@@ -115,9 +117,12 @@ def get_flight():
 
 @app.post("/test")
 async def create_date_range(date_range: DateRange):
+    tz = pytz.timezone('Asia/Bangkok')
     start_date = date_range.start_date
     end_date = date_range.end_date
     hour = date_range.hour
+
+    
     if len(hour) == 1:
         # Add zero-padding to the hour string
         hour = f"0{hour}"
@@ -129,8 +134,8 @@ async def create_date_range(date_range: DateRange):
         # Add zero-padding to the hour string
         end_hour = f"0{end_hour}"
     Airport_id = 'DMK'
-    Airport_start = f'{start_date}T{hour}%3A00%3A00Z'
-    Airport_end = f'{end_date}T{end_hour}%3A00%3A00Z'
+    Airport_start = f'{start_date}T{hour}%3A00%3A00%2B07%3A00'
+    Airport_end = f'{end_date}T{end_hour}%3A00%3A00%2B07%3A00'
     #----- get flight data from DMK airport -----#
     response = requests.get(apiUrl + f"airports/{Airport_id}/flights/departures?start={Airport_start}&end={Airport_end}&max_pages=4",
     headers=auth_header)
@@ -140,7 +145,11 @@ async def create_date_range(date_range: DateRange):
     
     Departures_FlightID = []
     counter = 0
-    for i in response.json()['departures']:
+    response = response.json()
+    # for i in response.json()['departures']:
+    if "departures" not in response:
+        print("departures not in response", start_date, end_date, hour, end_hour)
+    for i in response['departures']:
         if counter == 2:
             break
         # counter += 1
@@ -148,11 +157,6 @@ async def create_date_range(date_range: DateRange):
             Departures_FlightID.append(i['fa_flight_id'])
             counter += 1
 
-    # print(Departures_FlightID)
-
-    # print(response.json())
-    # print('counter =>',counter)
-    # return response.json()
 
     #----- get data from flight ID -----#
     Dict_departures_flights = {
@@ -161,6 +165,14 @@ async def create_date_range(date_range: DateRange):
     }
 
     for id in Departures_FlightID:
+        check_docs = db.collection('filter_flight').document(id).get()
+        if check_docs.exists:
+            print('Document exists',id)
+            Showflights.append(id)
+            continue
+        # else:
+        #     print('Document does not exist',id)
+
         response = requests.get(apiUrl + f"flights/{id}/track",
         headers=auth_header)
 
@@ -456,13 +468,7 @@ def grid2firebase(date:generate_grid_api):
         'error':[],
         'succuss':[]
     }
-    # print('All flight ',flight_dict)
-    # count = 0
     for i in flight_dict:
-        # break
-        # count +=1
-        # print(count)
-        # print(i)
         name = i['id']
         print(name)
         doc_ref2 = db.collection('detail_and_grid').document('grid').collection(f'{name}')
@@ -479,23 +485,60 @@ def grid2firebase(date:generate_grid_api):
 
         df_grid = tmp.pop('df', None)
 
-        # if tmp['status'] == 0:
-        #     result['error'].append(tmp)
-        # else:
-        #     result['succuss'].append(tmp)
-        # print('----------------', df_grid)
         if df_grid is not None:
             result['succuss'].append(tmp)
-            # flight_list.append(df_grid)
             df_grid.reset_index(inplace=True)
             df_grid.columns = [str(col) for col in df_grid.columns]
             postdata = df_grid.to_dict('records')
-            # print(postdata)
             list(map(lambda x: doc_ref2.add(x), postdata))
             print(f'add {i} succuess')
         else:
             result['error'].append(tmp)
             print("error", i)
+        # break
+  
+
+    return JSONResponse(content=result)
+
+@app.post('/web_cal_grid')
+def web_cal_grid(flight_dict:List[str]):
+
+    result = {
+        'error':[],
+        'succuss':[]
+    }
+    for name in flight_dict:
+        # test_doc = db.collection('filter_flight').document(name).get()
+        # if test_doc.exists:
+        #     print('Document exists',name)
+        # else:
+        #     print('Document does not exist',name)
+        #     return
+        print(name)
+        doc_ref2 = db.collection('detail_and_grid').document('grid').collection(f'{name}')
+        check_exist = doc_ref2.limit(1).stream()
+        check_exist = list(check_exist)
+        if check_exist != []:
+            print('found')
+            continue
+        else:
+            print('not found at main')
+
+    
+        tmp = generate_grid(name, db)
+
+        df_grid = tmp.pop('df', None)
+
+        if df_grid is not None:
+            result['succuss'].append(tmp)
+            df_grid.reset_index(inplace=True)
+            df_grid.columns = [str(col) for col in df_grid.columns]
+            postdata = df_grid.to_dict('records')
+            list(map(lambda x: doc_ref2.add(x), postdata))
+            print(f'add {name} succuess')
+        else:
+            result['error'].append(tmp)
+            print("error", name)
         # break
   
 

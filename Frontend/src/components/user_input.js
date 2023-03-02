@@ -3,8 +3,10 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 
 function User_Input(props) {
-    const [userLat, setUserLat] = useState(13.9133);
-    const [userLong, setUserLong] = useState(100.6042);
+    // const [userLat, setUserLat] = useState(13.9133);
+    // const [userLong, setUserLong] = useState(100.6042);
+    const [userLat, setUserLat] = useState();
+    const [userLong, setUserLong] = useState();
     // lat = 13.9133
     // long = 100.6042
 

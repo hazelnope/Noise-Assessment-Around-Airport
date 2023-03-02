@@ -1,0 +1,31 @@
+.Download {
+    height: 10rem;
+}
+
+.textDownloadFile {
+    text-align: center;
+    font-size: 2rem;
+    margin-top: 2%;
+}
+
+.DownloadFileButton {
+    display: block;
+    width: 10rem;
+    height: 2rem;
+    margin: 2% 45%;
+    border-radius: 4px;
+    background-color: #B93757; /* Red */
+    border: 2px solid #B93757;
+    color: white;
+}
+
+.DownloadFileButton:hover {
+    display: block;
+    width: 10rem;
+    height: 2rem;
+    margin: 2% 45%;
+    border-radius: 4px;
+    background-color: white;
+    border: 2px solid #B93757;
+    color: #B93757;
+}

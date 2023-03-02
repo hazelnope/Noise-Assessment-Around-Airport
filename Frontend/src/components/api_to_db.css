@@ -1,0 +1,114 @@
+.FindFlightsAndCalGrids {
+    display: flex;
+    width: "100%";
+}
+
+.FindFlights {
+    width: 50%; 
+}
+
+.CalGrids {
+    width: 50%;
+}
+
+.DateTimeText {
+    text-align: center;
+    font-size: 3rem;
+    margin: 1%;
+}
+
+.FlightAware {
+    display: grid;
+    text-align: center;
+}
+
+.DateAndTime {
+    display: flex;
+    margin: 3% 25%;
+}
+
+.SearchFlightButton {
+    display: block;
+    width: 10%;
+    height: 2rem;
+    margin: 3% 45%;
+    border-radius: 4px;
+    background-color: white;
+    border: 2px solid #4CAF50;
+    color: #4CAF50;
+}
+
+.SearchFlightButton:hover {
+    display: block;
+    width: 10%;
+    height: 2rem;
+    margin: 3% 45%;
+    border-radius: 4px;
+    background-color: #4CAF50; /* Green */
+    border: 2px solid #4CAF50;
+    color: white;
+}
+
+.textShowFlights {
+    text-align: center;
+    font-size: 2rem;
+    margin: 1%;
+    margin-bottom: 7%;
+}
+
+.FlightGrids {
+    margin-top: 5%;
+    margin-left: 32%;
+}
+
+.loadingOval {
+    margin-left: 21.5rem;
+
+    /* text-align: center;
+    justify-content: center;
+    align-items: center; */
+}
+
+.CalgridButton {
+    display: block;
+    width: 15rem;
+    height: 2rem;
+    margin: 7% 35%;
+    border-radius: 4px;
+    background-color: white;
+    border: 2px solid #008CBA;
+    color: #008CBA;
+}
+
+.CalgridButton:hover {
+    display: block;
+    width: 15rem;
+    height: 2rem;
+    margin: 7% 35%;
+    border-radius: 4px;
+    background-color: #008CBA; /* Blue */
+    border: 2px solid #008CBA;
+    color: white;
+}
+
+.BackButton {
+    display: block;
+    width: 10rem;
+    height: 2rem;
+    margin: 3% 43%;
+    border-radius: 4px;
+    background-color: #B93757; /* Red */
+    border: 2px solid #B93757;
+    color: white;
+}
+
+.BackButton:hover {
+    display: block;
+    width: 10rem;
+    height: 2rem;
+    margin: 3% 43%;
+    border-radius: 4px;
+    background-color: white;
+    border: 2px solid #B93757;
+    color: #B93757;
+}
