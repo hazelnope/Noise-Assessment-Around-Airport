@@ -21,7 +21,7 @@ import pytz
 
 from function_backend.grid_to_firebase import generate_grid
 from function_backend.cumulative_level import Cumulative_model
-from function_backend.flight_aware_func import get_flight_aware
+
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -119,13 +119,14 @@ def get_flight():
 
 @app.post("/test")
 async def create_date_range(date_range: DateRange):
+    # print(date_range)
     tz = pytz.timezone('Asia/Bangkok')
     start_date = date_range.start_date
     end_date = date_range.end_date
     hour = date_range.hour
     state = date_range.state
     d_or_a = state[0].upper()
-    print(d_or_a)
+    # print(start_date, hour)
 
     
     if len(hour) == 1:
@@ -141,6 +142,7 @@ async def create_date_range(date_range: DateRange):
     Airport_id = 'DMK'
     Airport_start = f'{start_date}T{hour}%3A00%3A00%2B07%3A00'
     Airport_end = f'{end_date}T{end_hour}%3A00%3A00%2B07%3A00'
+    print(Airport_start)
     #----- get flight data from DMK airport -----#
     response = requests.get(apiUrl + f"airports/{Airport_id}/flights/{state}?start={Airport_start}&end={Airport_end}&max_pages=4",
     headers=auth_header)
@@ -174,7 +176,7 @@ async def create_date_range(date_range: DateRange):
         check_docs = db.collection('filter_flight').document(id).get()
         if check_docs.exists:
             print('Document exists',id)
-            Showflights.append(id)
+            Showflights.append(check_docs.to_dict())
             continue
 
 
@@ -257,7 +259,11 @@ async def create_date_range(date_range: DateRange):
             })
             postdata = Dict_departures_flights[day_night][flight].to_dict('records')
             list(map(lambda x: doc_ref2.add(x), postdata))
-            Showflights.append(flight)
+            Showflights.append({
+                'id':flight,
+                'date' :int(Dict_departures_flights[day_night][flight].iloc[0].timestamp.floor(freq='H').timestamp()),
+                'D_or_A': d_or_a
+            })
             print('insert success', flight)
        
 

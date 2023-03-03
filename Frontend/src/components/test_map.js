@@ -71,6 +71,10 @@ const My_test_map = (props) => {
 
 
         visualMap: {
+            top: 10,
+            right: 10,
+            calculable: true,
+            realtime: false,
             max: 100,
             inRange: {
                 color: [

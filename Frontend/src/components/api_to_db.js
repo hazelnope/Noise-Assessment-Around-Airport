@@ -16,6 +16,7 @@ function API_to_DB(props) {
   const [startDate, setStartDate] = useState(new Date())
   const [checkTime, setCheckTime] = useState(0)
   const [dataFromAxios, setDataFromAxios] = useState([])
+  const [checkType, setCheckType] = useState(0)
   const [loadingStateFlightAware, setLoadingStateFlightAware] = useState(1);
   //----- for cal grids -----//
   const [startDateGrids, setStartDateGrids] = useState(new Date())
@@ -39,13 +40,25 @@ function API_to_DB(props) {
   for (let i = 0; i < 8; i++) {
     options.push(`${i < 4 ? '0' : ''}${i * 3}:00 - ${i < 3 ? '0' : ''}${i * 3 + 2}:59`);
   }
+  const filter_path = ['departures', 'arrivals']
 
   const afterAxios = (flights) => {
     setDataFromAxios(flights)
     setLoadingStateFlightAware(1);
-    // console.log('flights_after_axios', flights);
+    console.log('flights_after_axios', flights);
     // console.log('flights_after_axios', dataFromAxios);
     // console.log('----------------------------')
+  }
+
+  const SecToDate = (sec) => {
+    var dateFormat = new Date(1970, 0, 1);
+    dateFormat.setSeconds(sec+25200);
+    // dateFormat.setSeconds(sec);
+    console.log('sec date',dateFormat)
+
+    // dateFormat = `${dateFormat.getFullYear()}/${dateFormat.getMonth() + 1}/${dateFormat.getDate()}`
+    dateFormat = `${dateFormat.getDate()}/${dateFormat.getMonth() + 1}/${dateFormat.getFullYear()}`
+    return dateFormat;
   }
 
   const flights = dataFromAxios.map((flight) =>
@@ -53,8 +66,10 @@ function API_to_DB(props) {
     //   {flight}
     // </ToggleButton>
 
-    <div id={`tbg-btn-${flight}`} value={flight}>
-      {flight}
+    <div id={`tbg-btn-${flight['id']}`} value={flight['id']}>
+      {/* {flight} */}
+      {/* {flight.split("-")[0] + " - " + SecToDate(flight.split("-")[1]) + " - "} */}
+      {flight['id'].split("-")[0] + " - " + SecToDate(flight['date']) + " - " + flight['D_or_A']}
     </div>
   );
 
@@ -68,16 +83,17 @@ function API_to_DB(props) {
   //   // console.log('เป็นรัย2',temp_flight)
   // }
 
-  const loadData = async (startDateAxios, endDateAxios, timeAxios) => {
-    // console.log(startDateAxios, endDateAxios, timeAxios)
+  const loadData = async (startDateAxios, endDateAxios, timeAxios, checkType) => {
+    console.log(startDateAxios, endDateAxios, timeAxios, checkType)
     setLoadingStateFlightAware(0)
     const response = await axios.post(url + 'test', {
       'start_date': startDateAxios,
       'end_date': endDateAxios,
-      'hour': timeAxios
+      'hour': timeAxios,
+      'state': checkType,
     }).catch((error) => {
       console.log("error ->", error)
-    }).then((response) =>{
+    }).then((response) => {
       // console.log(response.data.res),
       afterAxios(response.data.res);
     }
@@ -86,6 +102,10 @@ function API_to_DB(props) {
 
   const clickToSend = () => {
     if (checkTime === 0) {
+      // console.log("pls select time");
+      return;
+    }
+    if (checkType === 0) {
       // console.log("pls select time");
       return;
     }
@@ -111,7 +131,7 @@ function API_to_DB(props) {
       // console.log('endDateAxios', endDateAxios);
     }
 
-    loadData(startDateAxios, endDateAxios, timeAxios)
+    loadData(startDateAxios, endDateAxios, timeAxios, checkType)
   }
 
   const handleTimeClick = (eventKey) => {
@@ -119,18 +139,26 @@ function API_to_DB(props) {
     console.log('time:', checkTime)
   }
 
+  const handleTypeClick = (eventKey) => {
+    setCheckType(eventKey);
+    console.log('type:', checkType)
+  }
+
 
   //----- For calculate Grids -----//
 
   const afterAxiosGrids = (flights) => {
+    // console.log('after axios grid',flights)
     setDataFromGridsAxios(flights);
-    
+
 
   }
 
   const flightsGrids = dataFromGridsAxios.map((flightGrids) =>
-    <ToggleButton id={`tbg-btn-${flightGrids["id"]}`} value={flightGrids["id"]}>
-      {flightGrids["id"]}
+    <ToggleButton  variant={flightGrids['available_grid']===true? 'success':'warning'} class="blockSize" id={`tbg-btn-${flightGrids["id"]}`} value={flightGrids["id"]}>
+      {/* {flightGrids["id"]} */}
+      {flightGrids['id'].split("-")[0] + " - " + SecToDate(flightGrids['date']) + " - " + flightGrids['D_or_A']}
+      {/* {flightGrids['id'].split("-")[0] + " - " + SecToDate(flightGrids['date']) + " - " + flightGrids['D_or_A']} */}
     </ToggleButton>
   );
 
@@ -151,6 +179,7 @@ function API_to_DB(props) {
       // console.log("pls select time");
       return;
     }
+
     let startDateGridsAxios = `${startDateGrids.getFullYear()}-${startDateGrids.getMonth() + 1}-${startDateGrids.getDate()}`
     let timeGridsAxios = checkTimeGrids.split(':')[0]
 
@@ -188,16 +217,27 @@ function API_to_DB(props) {
             Search FlightAware Data
           </div>
 
-          <div class="DateAndTime">
+          <div class="DateAndTimeFlight">
             <DatePicker
               placeholderText={'S E L E C T - D A T E'}
               selected={startDate}
+              dateFormat='dd/MM/yyyy'
               // onChange={(date) => props.handleStartDate(date)}
               onChange={(date) => setStartDate(date)}
             />
+            <div class="NavFlight">
+              <NavDropdown title={checkTime ? checkTime : "S E L E C T - T I M E "} onSelect={handleTimeClick} id="navbarScrollingDropdown">
+                {options.map((option) => (
+                  <NavDropdown.Item eventKey={option} key={option}>
+                    {option}
+                  </NavDropdown.Item>
+                ))}
+              </NavDropdown>
+            </div>
 
-            <NavDropdown title={checkTime ? checkTime : "S E L E C T - T I M E "} onSelect={handleTimeClick} id="navbarScrollingDropdown">
-              {options.map((option) => (
+
+            <NavDropdown class="NavFlight" title={checkType ? checkType : "S E L E C T - T Y P E "} onSelect={handleTypeClick} id="navbarScrollingDropdown">
+              {filter_path.map((option) => (
                 <NavDropdown.Item eventKey={option} key={option}>
                   {option}
                 </NavDropdown.Item>
@@ -254,6 +294,7 @@ function API_to_DB(props) {
             <DatePicker
               placeholderText={'S E L E C T - D A T E'}
               selected={startDateGrids}
+              dateFormat='dd/MM/yyyy'
               // onChange={(date) => props.handleStartDate(date)}
               onChange={(date) => setStartDateGrids(date)}
             />
@@ -265,6 +306,7 @@ function API_to_DB(props) {
                 </NavDropdown.Item>
               ))}
             </NavDropdown>
+
           </div>
 
           <button class="SearchFlightButton" variant="primary" type="submit" onClick={clickToSendGrids}>
@@ -275,10 +317,25 @@ function API_to_DB(props) {
             {dataFromGridsAxios.length !== 0 ? <div class="textShowFlights">
               Select Flights for Calculate
             </div> : null}
+
+            {dataFromGridsAxios.length !== 0 ? <div class="textLabelGandY">
+              <p style={{color: "green", display: "inline-block"}}>Green&nbsp;</p>
+              <p style={{display: "inline-block"}}> : Calculated Grid , </p>
+              <p style={{color: "#FFBD00", display: "inline-block"}}> &nbsp;Orange&nbsp;</p>
+              <p style={{display: "inline-block"}}> : Uncalculate Grid</p>
+            </div> : null}
+
+            {show ?
+              <Alert variant="success" onClose={() => setShow(false)} dismissible>
+                <Alert.Heading >success</Alert.Heading>
+              </Alert> : null}
+
             {loadingState ?
               <div>
-                <div class="FlightGrids">
-                  <ToggleButtonGroup class="FlightGrids" value={selectData} onChange={handleSetDataCalGrid} type="checkbox" vertical={true}>
+                {/* <div class="FlightGrids"> */}
+                <div class="scrollBox">
+                  {/* <ToggleButtonGroup class="FlightGrids" value={selectData} onChange={handleSetDataCalGrid} type="checkbox" vertical={true}> */}
+                  <ToggleButtonGroup class={flightsGrids.length >= 5 ?'FlightGrids2':'FlightGrids'} value={selectData} onChange={handleSetDataCalGrid} type="checkbox" vertical={true}>
                     {flightsGrids}
                   </ToggleButtonGroup >
                 </div>
@@ -309,18 +366,23 @@ function API_to_DB(props) {
               </div>
             }
 
+            {/* {show ?
+              <Alert variant="success" onClose={() => setShow(false)} dismissible>
+                <Alert.Heading >success</Alert.Heading>
+              </Alert> : null} */}
 
           </div>
         </div>
       </div>
-      {show ?
+      {/* {show ?
         <Alert variant="success" onClose={() => setShow(false)} dismissible>
-          {/* <Alert.Heading>success</Alert.Heading>
+          <Alert.Heading>success</Alert.Heading>
         <p>
           Calculate Grids successful
-        </p> */}
+        </p>
           successful
-        </Alert> : null}
+        </Alert> : null} */}
+
 
       <button class="BackButton" onClick={handleGoBack}>Go back</button>
 

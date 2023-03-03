@@ -22,9 +22,18 @@
     text-align: center;
 }
 
+.DateAndTimeFlight {
+    display: flex;
+    margin: 3% 10%;
+}
+
 .DateAndTime {
     display: flex;
     margin: 3% 25%;
+}
+
+.NavFlight {
+    margin-right: 10%;
 }
 
 .SearchFlightButton {
@@ -53,12 +62,47 @@
     text-align: center;
     font-size: 2rem;
     margin: 1%;
-    margin-bottom: 7%;
+    margin-bottom: 1%;
+}
+
+.textLabelGandY {
+    text-align: center;
+    margin-bottom: 3%;
 }
 
 .FlightGrids {
+    /* height: 12rem; */
+    /* height: 100%; */
+    width: 100%;
+    /* width: 16rem; */
+    overflow-y: scroll;
+    /* margin-top: 5%;
+    margin-left: 37%; */
+}
+.FlightGrids2 {
+    height: 100%;
+    width: 100%;
+    overflow-y: scroll;
+    /* margin-top: 5%;
+    margin-left: 37%; */
+    /* background-color: red; */
+}
+.scrollBox{
+    width: 16rem;
+    height: 12rem;
+
     margin-top: 5%;
-    margin-left: 32%;
+    margin-left: 35%;
+}
+
+.FlightGrids::-webkit-scrollbar {
+    display: none;
+  }
+.blockSize{
+    width: 16rem;
+}
+.btn{
+    width: 100%;
 }
 
 .loadingOval {
@@ -73,7 +117,8 @@
     display: block;
     width: 15rem;
     height: 2rem;
-    margin: 7% 35%;
+    margin-top: 3rem;
+    margin: 3% 35%;
     border-radius: 4px;
     background-color: white;
     border: 2px solid #008CBA;
@@ -84,7 +129,8 @@
     display: block;
     width: 15rem;
     height: 2rem;
-    margin: 7% 35%;
+    margin-top: 3rem;
+    margin: 3% 35%;
     border-radius: 4px;
     background-color: #008CBA; /* Blue */
     border: 2px solid #008CBA;
@@ -95,7 +141,7 @@
     display: block;
     width: 10rem;
     height: 2rem;
-    margin: 3% 43%;
+    margin: 0% 43%;
     border-radius: 4px;
     background-color: #B93757; /* Red */
     border: 2px solid #B93757;
@@ -106,9 +152,18 @@
     display: block;
     width: 10rem;
     height: 2rem;
-    margin: 3% 43%;
+    margin: 0% 43%;
     border-radius: 4px;
     background-color: white;
     border: 2px solid #B93757;
+    color: #B93757;
+}
+
+
+.alert {
+    text-align: center;
+}
+
+.test_color{
     color: #B93757;
 }

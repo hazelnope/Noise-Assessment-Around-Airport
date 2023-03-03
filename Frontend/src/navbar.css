@@ -6,6 +6,8 @@
     /* display: block; */
     width: 10rem;
     height: 2rem;
+    margin-top: 0.25rem;
+    margin-left: 1rem;
     border-radius: 4px;
     background-color: #DD899D; /* Red */
     border: 2px solid #DD899D;
@@ -15,6 +17,8 @@
 .LikeToInsertData:hover {
     width: 10rem;
     height: 2rem;
+    margin-top: 0.25rem;
+    margin-left: 1rem;
     border-radius: 4px;
     background-color: white;
     border: 2px solid #DD899D;

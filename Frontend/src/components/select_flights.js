@@ -47,15 +47,22 @@ function Select_flights(props) {
 
     const SecToDate = (sec) => {
         var dateFormat = new Date(1970, 0, 1);
-        dateFormat.setSeconds(sec);
-        dateFormat = `${dateFormat.getFullYear()}/${dateFormat.getMonth() + 1}/${dateFormat.getDate()}`
+        dateFormat.setSeconds(sec+25200);
+        // dateFormat.setSeconds(sec);
+        console.log('sec date',dateFormat)
+    
+        // dateFormat = `${dateFormat.getFullYear()}/${dateFormat.getMonth() + 1}/${dateFormat.getDate()}`
+        dateFormat = `${dateFormat.getDate()}/${dateFormat.getMonth() + 1}/${dateFormat.getFullYear()}`
         return dateFormat;
-    }
+      }
 
     const flights = filterFlights.map((flight) =>
-        <ToggleButton id={`tbg-btn-${flight['id']}`} value={flight['id']}>
+        // <ToggleButton id={`tbg-btn-${flight['id']}`} value={flight['id']}>
+                <ToggleButton variant={flight['available_grid']===true? 'success':'warning'} class="test_color" id={`tbg-btn-${flight["id"]}`} value={flight["id"]}>
+
             {/* {flight['id']} */}
-            {flight['id'].split("-")[0]+" - "+SecToDate(flight['id'].split("-")[1])+" - "+flight['DA']}
+            {/* {flight['id'].split("-")[0]+" - "+SecToDate(flight['id'].split("-")[1])+" - "+flight['DA']} */}
+            {flight['id'].split("-")[0] + " - " + SecToDate(flight['date']) + " - " + flight['D_or_A']}
         </ToggleButton>
     );
 
@@ -69,10 +76,11 @@ function Select_flights(props) {
         <div class="PinAndFlights">
             <div class="LeftAndRight">
                 {props.filterFlights.length !== 0? <div class="textSelectFlights">
-                    Select Flights
+                    <h3>Select Flights</h3>
                 </div>:null}
 
-                <ToggleButtonGroup class="Flights" type="checkbox" value={value} onChange={handleChange} vertical={true}>
+                {/* <ToggleButtonGroup class="Flights" type="checkbox" value={value} onChange={handleChange} vertical={true}> */}
+                <ToggleButtonGroup class={flights.length >= 6 ?'Flight2':'Flight1'} value={value} onChange={handleChange} type="checkbox" vertical={true}>
                     {flights}
                 </ToggleButtonGroup >
 

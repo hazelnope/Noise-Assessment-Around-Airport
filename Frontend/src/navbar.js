@@ -65,7 +65,8 @@ function NavScrollExample(props) {
     await flight_dict.forEach(function (item) {
       // console.log('loop',item)
       // temp_flight.push(item.id) //อันเก่า
-      temp_flight.push({ "id": item.id, "DA": item.D_or_A })
+      // temp_flight.push({ "id": item.id,'date':item.date, "D_or_A": item.D_or_A })
+      temp_flight.push(item)
     })
     props.handleFilterFlights(temp_flight)
     // console.log('เป็นรัย2',temp_flight)
@@ -92,7 +93,7 @@ function NavScrollExample(props) {
     <Navbar bg="light" expand="lg">
       <Container fluid>
         <Navbar.Brand href="#">Noise Assessment Visualization</Navbar.Brand>
-        <Link to="/InsertData"><button class="LikeToInsertData" >Insert more flights</button></Link>
+        {/* <Link to="/InsertData"><button class="LikeToInsertData" >Insert more data</button></Link> */}
         <Navbar.Toggle aria-controls="navbarScroll" />
         <Navbar.Collapse id="navbarScroll">
           <Nav className="justify-content-end" style={{ width: "100%" }}>
@@ -110,6 +111,7 @@ function NavScrollExample(props) {
               <DatePicker
                 placeholderText={'S E L E C T - D A T E'}
                 selected={startDate}
+                dateFormat= 'dd/MM/yyyy'
                 // onChange={(date) => props.handleStartDate(date)}
                 onChange={(date) => handleStartDate(date)}
               />
@@ -126,6 +128,7 @@ function NavScrollExample(props) {
 
             {/* <button class="btn btn-outline-success" type="button" onClick={search}>Search</button> */}
             <button class="NavSearchButton" type="button" onClick={search}>Search</button>
+            <Link to="/InsertData"><button class="LikeToInsertData" >Insert more data</button></Link>
 
           </Nav>
         </Navbar.Collapse>
