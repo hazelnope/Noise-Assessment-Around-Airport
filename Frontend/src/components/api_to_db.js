@@ -40,7 +40,7 @@ function API_to_DB(props) {
   for (let i = 0; i < 8; i++) {
     options.push(`${i < 4 ? '0' : ''}${i * 3}:00 - ${i < 3 ? '0' : ''}${i * 3 + 2}:59`);
   }
-  const filter_path = ['departures', 'arrivals']
+  const filter_path = ['Departures', 'Arrivals']
 
   const afterAxios = (flights) => {
     setDataFromAxios(flights)
@@ -54,7 +54,7 @@ function API_to_DB(props) {
     var dateFormat = new Date(1970, 0, 1);
     dateFormat.setSeconds(sec+25200);
     // dateFormat.setSeconds(sec);
-    console.log('sec date',dateFormat)
+    // console.log('sec date',dateFormat)
 
     // dateFormat = `${dateFormat.getFullYear()}/${dateFormat.getMonth() + 1}/${dateFormat.getDate()}`
     dateFormat = `${dateFormat.getDate()}/${dateFormat.getMonth() + 1}/${dateFormat.getFullYear()}`
@@ -86,7 +86,8 @@ function API_to_DB(props) {
   const loadData = async (startDateAxios, endDateAxios, timeAxios, checkType) => {
     console.log(startDateAxios, endDateAxios, timeAxios, checkType)
     setLoadingStateFlightAware(0)
-    const response = await axios.post(url + 'test', {
+    // let startTime = performance.now()
+    const response = await axios.post(url + 'get_flightaware', {
       'start_date': startDateAxios,
       'end_date': endDateAxios,
       'hour': timeAxios,
@@ -96,6 +97,8 @@ function API_to_DB(props) {
     }).then((response) => {
       // console.log(response.data.res),
       afterAxios(response.data.res);
+      // let duration = (performance.now() - startTime) / 1000;
+      // console.log(`myFunction took ${duration} seconds to run.`);
     }
     );
   }
@@ -140,7 +143,7 @@ function API_to_DB(props) {
   }
 
   const handleTypeClick = (eventKey) => {
-    setCheckType(eventKey);
+    setCheckType(eventKey.toLowerCase());
     console.log('type:', checkType)
   }
 
@@ -199,12 +202,15 @@ function API_to_DB(props) {
   const handleCalculateGrid = () => {
     // console.log("start calculate grids")
     setLoadingState(0)
+    let startTime = performance.now()
     axios.post(url + 'web_cal_grid',
       selectData
     ).then((response) => {
       console.log('after cal grid', response.data.res);
       setLoadingState(1);
       setShow(1)
+      let duration = (performance.now() - startTime) / 1000;
+      console.log(`myFunction took ${duration} seconds to run.`);
     })
   }
 
@@ -236,7 +242,7 @@ function API_to_DB(props) {
             </div>
 
 
-            <NavDropdown class="NavFlight" title={checkType ? checkType : "S E L E C T - T Y P E "} onSelect={handleTypeClick} id="navbarScrollingDropdown">
+            <NavDropdown class="NavFlight" title={checkType ? checkType.charAt(0).toUpperCase() + checkType.slice(1) : "S E L E C T - T Y P E "} onSelect={handleTypeClick} id="navbarScrollingDropdown">
               {filter_path.map((option) => (
                 <NavDropdown.Item eventKey={option} key={option}>
                   {option}
@@ -315,19 +321,19 @@ function API_to_DB(props) {
 
           <div >
             {dataFromGridsAxios.length !== 0 ? <div class="textShowFlights">
-              Select Flights for Calculate
+              Select Flights to Calculate
             </div> : null}
 
             {dataFromGridsAxios.length !== 0 ? <div class="textLabelGandY">
               <p style={{color: "green", display: "inline-block"}}>Green&nbsp;</p>
-              <p style={{display: "inline-block"}}> : Calculated Grid , </p>
+              <p style={{display: "inline-block"}}> : Calculated , </p>
               <p style={{color: "#FFBD00", display: "inline-block"}}> &nbsp;Orange&nbsp;</p>
-              <p style={{display: "inline-block"}}> : Uncalculate Grid</p>
+              <p style={{display: "inline-block"}}> : Uncalculated</p>
             </div> : null}
 
             {show ?
               <Alert variant="success" onClose={() => setShow(false)} dismissible>
-                <Alert.Heading >success</Alert.Heading>
+                <Alert.Heading >Success</Alert.Heading>
               </Alert> : null}
 
             {loadingState ?

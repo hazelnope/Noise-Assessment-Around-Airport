@@ -64,6 +64,8 @@ def add_distance(lat1, long1, lat2, long2, h2):
 
 #----- function Single Soung Event -----#
 def function_L(sound) :
+    if sound ==0:
+        return 0
     return 10**(sound / 10)
 
 def get_feet(distance):
@@ -78,6 +80,9 @@ def npd_inter_per_flight(df_param, npd_id,npd):
     # print(df_param[df_param['Power Setting' ]!=df_param['Power Setting' ]])
     # print(df_param['Power Setting'].unique())
     # print(df_param.loc[257])
+    # print(npd_of_flight, npd_id)
+    # print(npd)
+
     # print('-------------------')
     npd_of_flight = npd_of_flight.reindex(npd_of_flight.index.union(df_param['Power Setting'].unique()))
     # npd_of_flight = npd_of_flight.drop(columns=['NPD_ID','Noise Metric','Op Mode'])
@@ -148,9 +153,9 @@ def cal_noise_model(npd_param, distance, power_setting):
     # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     x = npd_param.index.values.reshape(-1, 1)
     # y = npd_param[f'{power_setting}'].values.reshape(-1, 1)    
-
+    # print(npd_param.keys())
+    # y = npd_param[12000].values.reshape(-1, 1)    
     y = npd_param[power_setting].values.reshape(-1, 1)    
-
     x_inv_square = 1 / (x**2)
     x_transformed = np.c_[x, x_inv_square]
     reg = LinearRegression().fit(x_transformed, y)
@@ -162,8 +167,14 @@ def cal_noise_model(npd_param, distance, power_setting):
     result = y_pred[0][0]
     if result < 0:
         result = 0
+    # print(result)
         
     return result
+
+def sound_range(sound, Lmin):
+    if sound < Lmin:
+        return 0
+    return sound
 
 
 def Calculate_Grid(observer,df_param, npd_param):
@@ -202,11 +213,17 @@ def Calculate_Grid(observer,df_param, npd_param):
             #     if tmp.loc[index,'sound'] != tmp.loc[index,'sound']:
             #         tmp.loc[index,'sound'] = 0
 
-            
+            # find within range minus 10 of L max
+            Lmax = tmp['sound'].max()
+            L_min = Lmax -10
+            tmp['sound'] = tmp.apply(lambda row: sound_range(row['sound'], Lmin=L_min),axis=1)
             #----- Single Sound Event Model -----#
             # if tmp.empty:
             #     continue
             tmp['Function'] = tmp['sound'].apply(function_L)
+
+            
+
             area = integrate.simpson(tmp['Function'])
             #----- change -inf -> 0 -----#
             if area == 0:
@@ -223,7 +240,7 @@ def Calculate_Grid(observer,df_param, npd_param):
             observer[i][j][2] = lSEL
         
     # model_data.to_csv('tmp_model.csv')
-
+    # print(tmp['Function'])
     return observer
 
 def generate_grid(flight, db):
@@ -346,16 +363,18 @@ def generate_grid(flight, db):
     # #########################
     # print('here',df['df'].isna().sum())
     # return df['df']
-    # df['df'].to_csv('check_power.csv')
+    df['df'].to_csv('check_power.csv')
 
     #----- get NPD table -----#
-    # print(df['NPD_ID'])
+    # print(df['NPD_ID'],'npd')
+    # print(airtype,'airtype')
     df['npd'] = npd_inter_per_flight(df['df'], df['NPD_ID'], npd)
     #----- create grid [lat, long, 0] -----#
     df['grid'] = create_observerer()
 
     # print('aaaaaa',df['df'])
     #----- get grid from calculate_Grid -----#
+    # df['npd'].to_csv('check_npd.csv')
     df['grid'] = Calculate_Grid(df['grid'], df['df'], df['npd'])
 
     #----- TO PIVOT TABLE -----#

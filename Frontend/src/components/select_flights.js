@@ -49,7 +49,7 @@ function Select_flights(props) {
         var dateFormat = new Date(1970, 0, 1);
         dateFormat.setSeconds(sec+25200);
         // dateFormat.setSeconds(sec);
-        console.log('sec date',dateFormat)
+        // console.log('sec date',dateFormat)
     
         // dateFormat = `${dateFormat.getFullYear()}/${dateFormat.getMonth() + 1}/${dateFormat.getDate()}`
         dateFormat = `${dateFormat.getDate()}/${dateFormat.getMonth() + 1}/${dateFormat.getFullYear()}`

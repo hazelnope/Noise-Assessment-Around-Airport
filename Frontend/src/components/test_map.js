@@ -65,6 +65,17 @@ const My_test_map = (props) => {
     const [markerPoint, setMarkerPoint] = useState([[0, 0, 0]])
 
 
+    const SecToDate = (sec) => {
+        var dateFormat = new Date(1970, 0, 1);
+        dateFormat.setSeconds(sec + 25200);
+        // dateFormat.setSeconds(sec);
+        // console.log('sec date',dateFormat)
+
+        // dateFormat = `${dateFormat.getFullYear()}/${dateFormat.getMonth() + 1}/${dateFormat.getDate()}`
+        dateFormat = `${dateFormat.getDate()}/${dateFormat.getMonth() + 1}/${dateFormat.getFullYear()}`
+        return dateFormat;
+    }
+
     const getOption = () => ({
 
         maptalks3D: map,
@@ -128,8 +139,13 @@ const My_test_map = (props) => {
                 symbolSize: 1,
                 label: {
                     show: true,
-                    formatter: function (data) {
-                        return data[3];
+                    itemStyle:{
+                        color: '(255, 0, 0)',
+                        
+                    },
+                    formatter: function (flight) {
+                        console.log('flight',flight)
+                        return flight[3];
                     },
                     position: 'insideTop'
                 },
@@ -228,11 +244,11 @@ const My_test_map = (props) => {
                 itemStyle: {
                     opacity: 1,
                 },
-                emphasis:{
+                emphasis: {
                     itemStyle: {
                         // Color in emphasis state.
                         color: 'thistle'
-                      }
+                    }
                 }
             }
         ],
@@ -252,6 +268,7 @@ const My_test_map = (props) => {
         for (const flight in result) {
             let scatter_location = result[flight].value[5]
             let scatter_name = result[flight].id
+            scatter_name = scatter_name.split("-")[0] + " - " + SecToDate(result[flight].date) + " - " + result[flight].D_or_A
             let scatter_variable = [...scatter_location, scatter_name]
             // variable = [long, lat, alt, name]
             setScatter(previousState => [...previousState, scatter_variable])
@@ -284,7 +301,7 @@ const My_test_map = (props) => {
     function shortest_point() {
         let minDistance = null;
         let minCoord = null;
-        console.log('lat long2',props.userLat,props.userLong)
+        console.log('lat long2', props.userLat, props.userLong)
         if (props.userLat === null || props.userLat > 13.99 || props.userLat < 13.83 || props.userLong > 100.69 || props.userLong < 100.52) {
             return [0, 0, 0]
         }
@@ -305,7 +322,7 @@ const My_test_map = (props) => {
 
 
     useEffect(() => {
-        console.log('lat long',props.userLat,props.userLong)
+        console.log('lat long', props.userLat, props.userLong)
         console.log("marker", markerPoint);
 
         if (props.userLong !== 0 && props.userLat !== 0) {
@@ -315,7 +332,7 @@ const My_test_map = (props) => {
             // setMarkerPoint([[point_A[0], point_A[1], point_A[2]*10]])
             setMarkerPoint([point_A])
         }
-        else{
+        else {
             setMarkerPoint([[0, 0, 0]])
         }
 
@@ -339,7 +356,7 @@ const My_test_map = (props) => {
             props.handleGridForExport(response.data.cumu_grid)
             getData(response.data.res)
             // console.log('response ', response.data);
-            console.log('grid_nop:', gridData);
+            // console.log('grid_nop:', gridData);
         }
         fetchData();
 

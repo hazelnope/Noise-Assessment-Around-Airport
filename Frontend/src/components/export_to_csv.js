@@ -43,10 +43,10 @@ function To_CSV(props) {
         }
         
         const convertedDataframe = Object.entries(result).map(([key, value]) => ({
-            Lat: key,
+            'Long/Lat': key,
             ...value
         }));
-        console.log('result', convertedDataframe);
+        // console.log('result', convertedDataframe);
 
         download(convertedDataframe);
     }

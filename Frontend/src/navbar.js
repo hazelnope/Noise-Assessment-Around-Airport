@@ -128,7 +128,7 @@ function NavScrollExample(props) {
 
             {/* <button class="btn btn-outline-success" type="button" onClick={search}>Search</button> */}
             <button class="NavSearchButton" type="button" onClick={search}>Search</button>
-            <Link to="/InsertData"><button class="LikeToInsertData" >Insert more data</button></Link>
+            <Link to="/InsertData"><button class="LikeToInsertData" >Insert More Data</button></Link>
 
           </Nav>
         </Navbar.Collapse>
