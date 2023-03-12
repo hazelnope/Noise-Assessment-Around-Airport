@@ -157,11 +157,13 @@ def cal_noise_model(npd_param, distance, power_setting):
     # y = npd_param[12000].values.reshape(-1, 1)    
     y = npd_param[power_setting].values.reshape(-1, 1)    
     x_inv_square = 1 / (x**2)
+    # x_transformed = np.c_[x_inv_square]
     x_transformed = np.c_[x, x_inv_square]
     reg = LinearRegression().fit(x_transformed, y)
     
     x_pred_inv_square = 1 / (distance**2)
     x_pred_transformed = np.c_[distance, x_pred_inv_square]
+    # x_pred_transformed = np.c_[x_pred_inv_square]
     y_pred = reg.predict(x_pred_transformed)
 
     result = y_pred[0][0]
@@ -185,14 +187,18 @@ def Calculate_Grid(observer,df_param, npd_param):
             tmp = df_param.copy()
             
             #----- calculate distance every transection -----#
-            tmp_distance = []
+            # tmp_distance = []
             tmp['distance'] = -1
             
             for index, row in tmp.iterrows():
                 distance = add_distance(observer[i][j][0], observer[i][j][1], row['latitude'], row['longitude'], row['altitude'])
                 # print(distance)
-                tmp_distance.append(distance)
+                # tmp_distance.append(distance)
+                if distance > 5000 :
+                    distance = 999999
                 tmp.loc[index, 'distance'] = distance
+
+            
             
             #----- calculate L_dB from powersetting & distance -> copy to model_data -----#
             # for index, row in tmp.iterrows():
@@ -205,7 +211,6 @@ def Calculate_Grid(observer,df_param, npd_param):
             # npd_after_inter = npd_after_inter.interpolate(method='index',limit_direction='both',limit=200)
             # model_data = npd_after_inter.copy()
 
-            
             #----- add L_dB to df['sound'] & select -----#
             # for index, row in tmp.iterrows():
             #     tmp.loc[index,'sound'] = model_data.loc[row.distance,row['Power Setting']]
