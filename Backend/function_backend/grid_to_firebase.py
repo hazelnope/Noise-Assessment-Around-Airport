@@ -148,29 +148,38 @@ def create_observerer():
     return observer
 
 def cal_noise_model(npd_param, distance, power_setting):
-    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-    # print(npd_param, distance, power_setting)
-    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
     x = npd_param.index.values.reshape(-1, 1)
-    # y = npd_param[f'{power_setting}'].values.reshape(-1, 1)    
-    # print(npd_param.keys())
-    # y = npd_param[12000].values.reshape(-1, 1)    
+  
     y = npd_param[power_setting].values.reshape(-1, 1)    
     x_inv_square = 1 / (x**2)
-    # x_transformed = np.c_[x_inv_square]
     x_transformed = np.c_[x, x_inv_square]
     reg = LinearRegression().fit(x_transformed, y)
     
     x_pred_inv_square = 1 / (distance**2)
     x_pred_transformed = np.c_[distance, x_pred_inv_square]
-    # x_pred_transformed = np.c_[x_pred_inv_square]
     y_pred = reg.predict(x_pred_transformed)
 
     result = y_pred[0][0]
     if result < 0:
         result = 0
-    # print(result)
-        
+    r0 = npd_param.index[0] *0.3048
+    # r0 = 1
+    r = distance*0.3048
+    l = npd_param[power_setting].iloc[0]
+    # l = 100
+    res = 20 * np.log10(r/r0)
+    # res = 10 * np.log10(r/r0)
+    res = l-res
+    if res<0:
+        res = 0
+    # if res>60:
+    #     print(r0,r,res, l)
+
+
+
+    # print(r0,r, l)
+    print(result, res, distance)
     return result
 
 def sound_range(sound, Lmin):
@@ -194,8 +203,8 @@ def Calculate_Grid(observer,df_param, npd_param):
                 distance = add_distance(observer[i][j][0], observer[i][j][1], row['latitude'], row['longitude'], row['altitude'])
                 # print(distance)
                 # tmp_distance.append(distance)
-                if distance > 5000 :
-                    distance = 999999
+                # if distance > 5000 :
+                #     distance = 999999
                 tmp.loc[index, 'distance'] = distance
 
             
@@ -203,7 +212,9 @@ def Calculate_Grid(observer,df_param, npd_param):
             #----- calculate L_dB from powersetting & distance -> copy to model_data -----#
             # for index, row in tmp.iterrows():
             #     nop = cal_noise_model(npd_param, row['distance'], row['Power Setting'])
+            # print(tmp)
             tmp['sound'] =  tmp.apply(lambda row: cal_noise_model(npd_param, row['distance'], row['Power Setting']),axis=1)
+            # return
             # print(tmp)
             # return
             # npd_after_inter = npd_param.reindex(npd_param.index.union(tmp_distance))
@@ -246,6 +257,7 @@ def Calculate_Grid(observer,df_param, npd_param):
         
     # model_data.to_csv('tmp_model.csv')
     # print(tmp['Function'])
+    # print(tmp)
     return observer
 
 def generate_grid(flight, db):
@@ -368,7 +380,7 @@ def generate_grid(flight, db):
     # #########################
     # print('here',df['df'].isna().sum())
     # return df['df']
-    df['df'].to_csv('check_power.csv')
+    # df['df'].to_csv('check_power.csv')
 
     #----- get NPD table -----#
     # print(df['NPD_ID'],'npd')
@@ -380,8 +392,10 @@ def generate_grid(flight, db):
     # print('aaaaaa',df['df'])
     #----- get grid from calculate_Grid -----#
     # df['npd'].to_csv('check_npd.csv')
+    df['npd'] = df['npd'].sort_index()
+    # df['npd'] = df['npd'] * 0.3048
     df['grid'] = Calculate_Grid(df['grid'], df['df'], df['npd'])
-
+    return None
     #----- TO PIVOT TABLE -----#
     df_tmp = pd.DataFrame(columns = ['Lat','Long','L_dB'])
 
