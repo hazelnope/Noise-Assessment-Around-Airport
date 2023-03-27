@@ -165,6 +165,7 @@ async def create_date_range(date_range: DateRange):
         if 'schedule' in i['fa_flight_id']:
             Departures_FlightID.append(i['fa_flight_id'])
             counter += 1
+    
 
 
     #----- get data from flight ID -----#
@@ -193,10 +194,20 @@ async def create_date_range(date_range: DateRange):
             tmp_df = tmp_df.drop_duplicates(subset=['timestamp'], keep='first')
             
             #----- altitude <= 100k ft. & index[1]-index[0]==1 -----#
+            if state == 'arrivals':
+                print('arrivals')
+                tmp_df.sort_index(ascending=False,inplace=True)
+                # print(tmp_df)
+                # return
             tmp_df = tmp_df[tmp_df['altitude']<=100]
             tmp_df['check_index_1'] = tmp_df.index
             tmp_df['check_index_2'] = tmp_df['check_index_1'].shift(-1)
-            tmp_df['drop'] = tmp_df['check_index_2']-tmp_df['check_index_1'] == 1
+            if state == 'arrivals':
+                tmp_df['drop'] = tmp_df['check_index_1']-tmp_df['check_index_2'] == 1
+            else:
+                tmp_df['drop'] = tmp_df['check_index_2']-tmp_df['check_index_1'] == 1
+            
+            
             
             #----- loop append only Departures -----#
             res = pd.DataFrame()
@@ -207,12 +218,20 @@ async def create_date_range(date_range: DateRange):
                 n+=1
             res = res.append(tmp_df.iloc[n])
             # res = pd.concat([res, tmp_df.iloc[n]])
+            # print(res)
+            # return
             
             #----- interpolate 1 sec -----#
             res['timestamp'] = pd.to_datetime(res.timestamp)
-            nidx = np.arange(res['timestamp'][0], res['timestamp'].iloc[-1], 1000000 )
-            nidx = pd.to_datetime(nidx)
-
+            if state == 'arrivals':
+                nidx = np.arange(res['timestamp'].iloc[0], res['timestamp'].iloc[-1], -1000000 )
+                nidx = pd.to_datetime(nidx)
+                # print(nidx)
+            else:
+                nidx = np.arange(res['timestamp'].iloc[0], res['timestamp'].iloc[-1], 1000000 )
+                nidx = pd.to_datetime(nidx)
+                # print(nidx)
+            # return
             res['timestamp'] = res['timestamp'].round('S').dt.tz_localize(None)
             res.set_index('timestamp', inplace=True)
             res = res.reindex(res.index.union(nidx))
@@ -533,7 +552,7 @@ def web_cal_grid(flight_dict:List[str]):
 
     
         tmp = generate_grid(name, db)
-
+        # return {}
         df_grid = tmp.pop('df', None)
 
         if df_grid is not None:
@@ -706,6 +725,33 @@ def flight_path(item:list_flight):
 #     return {'response':'success'}
 
 
+def get_feet(distance):
+    feet = distance.split('_')[1]
+    return float(feet[:-2])
+
+def check_spherical_propagation(r,l2, l0,r0):
+    if r == r0:
+        return l0
+    return
+
+@app.post('/check_noise_model')
+def check_noise_model():
+    npd_ref = db.collection(f'ANP_sound')
+    npd_docs = list(npd_ref.stream())
+    npd_dict = list(map(lambda x: x.to_dict(), npd_docs))
+    npd = pd.DataFrame(npd_dict)
+    npd = npd.query('NPD_ID == "CF567B" and `Op Mode` == "D" and `Noise Metric` == "LAmax" ')
+    npd.set_index('Power Setting', inplace=True)
+    npd = npd.drop(columns=['NPD_ID','Noise Metric','Op Mode']).T.reset_index()
+    npd.rename(columns={'index':'distance'},inplace=True)
+    npd['distance'] = npd['distance'].apply(get_feet)
+    npd.columns = [str(col) for col in npd.columns]
+    npd['distance'] = npd['distance'] *0.3048
+    npd.apply(lambda row: check_spherical_propagation(row['distance'], row['distance'], row['Power Setting']),axis=1)
+    print(npd)
+
+
+    return
 
 
 

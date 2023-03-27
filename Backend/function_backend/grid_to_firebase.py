@@ -72,6 +72,13 @@ def get_feet(distance):
     feet = distance.split('_')[1]
     return float(feet[:-2])
 
+#----- Attenuation of Sound -----#
+def Attenuation_of_Sound(distance, sound):
+    Attenuation = 1.41 * distance * 0.0003048
+    new_sound = sound - Attenuation
+    # print(new_sound, sound)
+    return new_sound
+
 def npd_inter_per_flight(df_param, npd_id,npd):
     npd_of_flight = npd[npd['NPD_ID'] == npd_id]
     npd_of_flight = npd_of_flight[npd_of_flight['Noise Metric'] == 'LAmax']
@@ -149,20 +156,23 @@ def create_observerer():
 
 def cal_noise_model(npd_param, distance, power_setting):
 
-    x = npd_param.index.values.reshape(-1, 1)
+    # x = npd_param.index.values.reshape(-1, 1)
   
-    y = npd_param[power_setting].values.reshape(-1, 1)    
-    x_inv_square = 1 / (x**2)
-    x_transformed = np.c_[x, x_inv_square]
-    reg = LinearRegression().fit(x_transformed, y)
+    # y = npd_param[power_setting].values.reshape(-1, 1)    
+    # x_inv_square = 1 / (x**2)
+    # x_transformed = np.c_[x, x_inv_square]
+    # reg = LinearRegression().fit(x_transformed, y)
     
-    x_pred_inv_square = 1 / (distance**2)
-    x_pred_transformed = np.c_[distance, x_pred_inv_square]
-    y_pred = reg.predict(x_pred_transformed)
+    # x_pred_inv_square = 1 / (distance**2)
+    # x_pred_transformed = np.c_[distance, x_pred_inv_square]
+    # y_pred = reg.predict(x_pred_transformed)
 
-    result = y_pred[0][0]
-    if result < 0:
-        result = 0
+    # result = y_pred[0][0]
+    # if result < 0:
+    #     result = 0
+
+
+
     r0 = npd_param.index[0] *0.3048
     # r0 = 1
     r = distance*0.3048
@@ -173,14 +183,14 @@ def cal_noise_model(npd_param, distance, power_setting):
     res = l-res
     if res<0:
         res = 0
-    # if res>60:
-    #     print(r0,r,res, l)
+
 
 
 
     # print(r0,r, l)
-    print(result, res, distance)
-    return result
+    # print(result, res, distance)
+    return res
+    # return result
 
 def sound_range(sound, Lmin):
     if sound < Lmin:
@@ -194,7 +204,8 @@ def Calculate_Grid(observer,df_param, npd_param):
         for j in range(len(observer[i])): # j = [lat, long, L(dB)]
             #----- copy df_param -----#
             tmp = df_param.copy()
-            
+            T0 = tmp.shape[0]
+            # print(T0)
             #----- calculate distance every transection -----#
             # tmp_distance = []
             tmp['distance'] = -1
@@ -229,15 +240,25 @@ def Calculate_Grid(observer,df_param, npd_param):
             #     if tmp.loc[index,'sound'] != tmp.loc[index,'sound']:
             #         tmp.loc[index,'sound'] = 0
 
+            #----- Attenuation of Sound -----#
+            # from ISO-9613-1-1993; @ 315 Hz, 15 C, humidity 90%
+            tmp['sound'] =  tmp.apply(lambda row: Attenuation_of_Sound(row['distance'], row['sound']),axis=1)
+            
+            
+            # return
             # find within range minus 10 of L max
             Lmax = tmp['sound'].max()
             L_min = Lmax -10
             tmp['sound'] = tmp.apply(lambda row: sound_range(row['sound'], Lmin=L_min),axis=1)
+            
+            
+            
             #----- Single Sound Event Model -----#
             # if tmp.empty:
             #     continue
             tmp['Function'] = tmp['sound'].apply(function_L)
 
+            # T0 = tmp[tmp['sound']!=0].shape[0]
             
 
             area = integrate.simpson(tmp['Function'])
@@ -245,15 +266,21 @@ def Calculate_Grid(observer,df_param, npd_param):
             if area == 0:
                 lSEL = 0
             else:
-                lSEL = 10*np.log10( (1/1)*area)
+                # lSEL = 10*np.log10( (1/1)*area) #เก่า
+                lSEL = 10*np.log10( (1/T0)*area) #ใหม่
                 # if lSEL != lSEL:
                 #     print('have NAN2')
                 # if lSEL <= 40 or lSEL >=85:
                 #     print("have ",lSEL)
         
+
             
             #----- add l_dB to observer -----#
             observer[i][j][2] = lSEL
+            
+            # print(lSEL)
+            # return
+
         
     # model_data.to_csv('tmp_model.csv')
     # print(tmp['Function'])
@@ -395,7 +422,7 @@ def generate_grid(flight, db):
     df['npd'] = df['npd'].sort_index()
     # df['npd'] = df['npd'] * 0.3048
     df['grid'] = Calculate_Grid(df['grid'], df['df'], df['npd'])
-    return None
+    # return None
     #----- TO PIVOT TABLE -----#
     df_tmp = pd.DataFrame(columns = ['Lat','Long','L_dB'])
 
