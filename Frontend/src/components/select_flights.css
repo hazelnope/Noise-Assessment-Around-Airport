@@ -75,23 +75,15 @@
 }
 
 .Flight1 {
-    /* height: 12rem; */
-    /* height: 100%; */
     width: 16rem;
     overflow-y: scroll;
-    /* margin-top: 5%; */
     margin-left: 34%;
-    /* margin-right: 20%; */
 }
 .Flight2 {
     height: 12rem;
     width: 16rem;
     overflow-y: scroll;
-    /* margin-top: 5%; */
-    /* margin-left: 34%; */
     margin: 0% 30%;
-    /* background-color: red; */
-    /* margin-right: 20%; */
     align-items: 'center',
 }
 

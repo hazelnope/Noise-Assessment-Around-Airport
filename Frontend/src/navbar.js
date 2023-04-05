@@ -37,7 +37,6 @@ function NavScrollExample(props) {
     eventKey = eventKey.split(' ')[0]
     eventKey = eventKey + ':00'
     // console.log('key aftedr split', eventKey)
-    // props.handleTimeChange(eventKey);
     setSelectTime(eventKey);
 
     if (eventKey === '21:00:00') {
@@ -61,19 +60,17 @@ function NavScrollExample(props) {
 
   const handleSearch = async (flight_dict) => {
     temp_flight = []
-    // console.log('เป็นรัย1',flight_dict)
+    // console.log('flight1',flight_dict)
     await flight_dict.forEach(function (item) {
       // console.log('loop',item)
-      // temp_flight.push(item.id) //อันเก่า
-      // temp_flight.push({ "id": item.id,'date':item.date, "D_or_A": item.D_or_A })
       temp_flight.push(item)
     })
     props.handleFilterFlights(temp_flight)
-    // console.log('เป็นรัย2',temp_flight)
+    // console.log('flight2',temp_flight)
   }
 
   const search = () => {
-    console.log('search', `${selectdate} ${selecttime}`);
+    // console.log('search', `${selectdate} ${selecttime}`);
 
     axios.post(url + 'filter_flight', {
       // 2022-12-13 06:00:00
@@ -97,15 +94,7 @@ function NavScrollExample(props) {
         <Navbar.Toggle aria-controls="navbarScroll" />
         <Navbar.Collapse id="navbarScroll">
           <Nav className="justify-content-end" style={{ width: "100%" }}>
-            {/* <NavDropdown title={checkDate ? selectdate : "S E L E C T - D A T E "} id="navbarScrollingDropdown" onSelect={handleDateClick} >
-              <NavDropdown.Item eventKey="2022-12-10">2022-12-10</NavDropdown.Item>
-              <NavDropdown.Item eventKey="2022-12-15">2022-12-15</NavDropdown.Item>
-              <NavDropdown.Item eventKey="2022-12-20">2022-12-20</NavDropdown.Item>
-              <NavDropdown.Item eventKey="2022-12-25">2022-12-25</NavDropdown.Item>
-              <NavDropdown.Item eventKey="2022-12-13">2022-12-13</NavDropdown.Item>
-              <NavDropdown.Item eventKey="2023-01-12">2023-01-12</NavDropdown.Item>
-              <NavDropdown.Item eventKey="2023-01-14">2023-01-14</NavDropdown.Item>
-            </NavDropdown> */}
+
 
             <div class='SelectDate'>
               <DatePicker

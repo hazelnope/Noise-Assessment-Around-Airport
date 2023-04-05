@@ -24,6 +24,9 @@ yarn-error.log*
 
 # add cache
 /Backend/__pycache__
+/Backend/function_backend/__pycache__
 /Backend/key_value/__pycache__
 /Backend/.ipynb_checkpoints
+/Backend/noise-assessment-firebase-adminsdk-zwyak-47c438c242.json
+/Backend/serviceAccount.json
 /Preprocess/.ipynb_checkpoints

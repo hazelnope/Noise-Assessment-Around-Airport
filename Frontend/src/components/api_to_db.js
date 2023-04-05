@@ -53,38 +53,24 @@ function API_to_DB(props) {
   const SecToDate = (sec) => {
     var dateFormat = new Date(1970, 0, 1);
     dateFormat.setSeconds(sec+25200);
-    // dateFormat.setSeconds(sec);
     // console.log('sec date',dateFormat)
 
-    // dateFormat = `${dateFormat.getFullYear()}/${dateFormat.getMonth() + 1}/${dateFormat.getDate()}`
     dateFormat = `${dateFormat.getDate()}/${dateFormat.getMonth() + 1}/${dateFormat.getFullYear()}`
     return dateFormat;
   }
 
   const flights = dataFromAxios.map((flight) =>
-    // <ToggleButton id={`tbg-btn-${flight}`} value={flight}>
-    //   {flight}
-    // </ToggleButton>
 
-    <div id={`tbg-btn-${flight['id']}`} value={flight['id']}>
+    <div id={`tbg-btn-${flight['id']}-FlightAwareData`} value={flight['id']}>
       {/* {flight} */}
       {/* {flight.split("-")[0] + " - " + SecToDate(flight.split("-")[1]) + " - "} */}
       {flight['id'].split("-")[0] + " - " + SecToDate(flight['date']) + " - " + flight['D_or_A']}
     </div>
   );
 
-  // const handleFlightsAxios = async (flight_dict) => {
-  //   temp_flight = []
-  //   // console.log('เป็นรัย1',flight_dict)
-  //   await flight_dict.forEach(function (item) {
-  //     temp_flight.push({ "id": item.id, "DA": item.D_or_A })
-  //   })
-  //   setDataFromAxios(temp_flight.id)
-  //   // console.log('เป็นรัย2',temp_flight)
-  // }
 
   const loadData = async (startDateAxios, endDateAxios, timeAxios, checkType) => {
-    console.log(startDateAxios, endDateAxios, timeAxios, checkType)
+    // console.log(startDateAxios, endDateAxios, timeAxios, checkType)
     setLoadingStateFlightAware(0)
     // let startTime = performance.now()
     const response = await axios.post(url + 'get_flightaware', {
@@ -97,7 +83,6 @@ function API_to_DB(props) {
     }).then((response) => {
       // console.log(response.data.res),
       afterAxios(response.data.res);
-      // let duration = (performance.now() - startTime) / 1000;
       // console.log(`myFunction took ${duration} seconds to run.`);
     }
     );
@@ -139,12 +124,12 @@ function API_to_DB(props) {
 
   const handleTimeClick = (eventKey) => {
     setCheckTime(eventKey);
-    console.log('time:', checkTime)
+    // console.log('time:', checkTime)
   }
 
   const handleTypeClick = (eventKey) => {
     setCheckType(eventKey.toLowerCase());
-    console.log('type:', checkType)
+    // console.log('type:', checkType)
   }
 
 
@@ -153,26 +138,22 @@ function API_to_DB(props) {
   const afterAxiosGrids = (flights) => {
     // console.log('after axios grid',flights)
     setDataFromGridsAxios(flights);
-
-
   }
 
   const flightsGrids = dataFromGridsAxios.map((flightGrids) =>
-    <ToggleButton  variant={flightGrids['available_grid']===true? 'success':'warning'} class="blockSize" id={`tbg-btn-${flightGrids["id"]}`} value={flightGrids["id"]}>
-      {/* {flightGrids["id"]} */}
+    <ToggleButton  variant={flightGrids['available_grid']===true? 'success':'warning'} class="blockSize" id={`tbg-btn-${flightGrids["id"]}-NoiseModel`} value={flightGrids["id"]}>
       {flightGrids['id'].split("-")[0] + " - " + SecToDate(flightGrids['date']) + " - " + flightGrids['D_or_A']}
-      {/* {flightGrids['id'].split("-")[0] + " - " + SecToDate(flightGrids['date']) + " - " + flightGrids['D_or_A']} */}
     </ToggleButton>
   );
 
   const loadDataGrids = async (startDateGrids, timeGridsAxios) => {
-    console.log(startDateGrids, timeGridsAxios)
+    // console.log(startDateGrids, timeGridsAxios)
 
     axios.post(url + 'filter_flight', {
       // 2022-12-13 06:00:00
       'date': `${startDateGrids} ${timeGridsAxios}:00:00`
     }).then((response) => {
-      console.log('get flights for cal grids', response.data.res)
+      // console.log('get flights for cal grids', response.data.res)
       afterAxiosGrids(response.data.res)
     })
   }
@@ -191,11 +172,11 @@ function API_to_DB(props) {
 
   const handleTimeClickGrids = (eventKey) => {
     setCheckTimeGrids(eventKey);
-    console.log('time:', checkTime)
+    // console.log('time:', checkTime)
   }
 
   const handleSetDataCalGrid = (val) => {
-    console.log(val)
+    // console.log(val)
     setSelectData(val)
   };
 
@@ -206,11 +187,11 @@ function API_to_DB(props) {
     axios.post(url + 'web_cal_grid',
       selectData
     ).then((response) => {
-      console.log('after cal grid', response.data.res);
+      // console.log('after cal grid', response.data.res);
       setLoadingState(1);
       setShow(1)
       let duration = (performance.now() - startTime) / 1000;
-      console.log(`myFunction took ${duration} seconds to run.`);
+      // console.log(`myFunction took ${duration} seconds to run.`);
     })
   }
 
@@ -260,9 +241,7 @@ function API_to_DB(props) {
               Available Flights
             </div> : null}
 
-            {/* <ToggleButtonGroup class="Flights" type="checkbox" vertical={true}>
-              {flights}
-            </ToggleButtonGroup > */}
+
             {loadingStateFlightAware ?
               <div class="FlightAware">
                 {flights}
@@ -283,9 +262,7 @@ function API_to_DB(props) {
                 />
               </div>
             }
-            {/* <div class="FlightAware">
-              {flights}
-            </div > */}
+
 
           </div>
         </div>
@@ -327,7 +304,7 @@ function API_to_DB(props) {
             {dataFromGridsAxios.length !== 0 ? <div class="textLabelGandY">
               <p style={{color: "green", display: "inline-block"}}>Green&nbsp;</p>
               <p style={{display: "inline-block"}}> : Calculated , </p>
-              <p style={{color: "#FFBD00", display: "inline-block"}}> &nbsp;Orange&nbsp;</p>
+              <p style={{color: "#FFBD00", display: "inline-block"}}> &nbsp;Yellow&nbsp;</p>
               <p style={{display: "inline-block"}}> : Uncalculated</p>
             </div> : null}
 
@@ -338,9 +315,7 @@ function API_to_DB(props) {
 
             {loadingState ?
               <div>
-                {/* <div class="FlightGrids"> */}
                 <div class="scrollBox">
-                  {/* <ToggleButtonGroup class="FlightGrids" value={selectData} onChange={handleSetDataCalGrid} type="checkbox" vertical={true}> */}
                   <ToggleButtonGroup class={flightsGrids.length >= 5 ?'FlightGrids2':'FlightGrids'} value={selectData} onChange={handleSetDataCalGrid} type="checkbox" vertical={true}>
                     {flightsGrids}
                   </ToggleButtonGroup >
@@ -372,28 +347,15 @@ function API_to_DB(props) {
               </div>
             }
 
-            {/* {show ?
-              <Alert variant="success" onClose={() => setShow(false)} dismissible>
-                <Alert.Heading >success</Alert.Heading>
-              </Alert> : null} */}
+
 
           </div>
         </div>
       </div>
-      {/* {show ?
-        <Alert variant="success" onClose={() => setShow(false)} dismissible>
-          <Alert.Heading>success</Alert.Heading>
-        <p>
-          Calculate Grids successful
-        </p>
-          successful
-        </Alert> : null} */}
-
 
       <button class="BackButton" onClick={handleGoBack}>Go back</button>
 
     </div>
-
 
   );
 }

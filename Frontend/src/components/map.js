@@ -1,223 +1,357 @@
-// import React, { createRef, useEffect } from "react";
-// import ReactEcharts from 'echarts-for-react';
-// import 'echarts-gl'
-// import 'mapbox-echarts'
-// import * as maptalks from 'maptalks'
-// import { Select,Checkbox } from 'antd';
-// import PropTypes from 'prop-types';
-// import axios from 'axios';
+import React, { createRef, useEffect, useState, useMemo } from "react";
+import ReactEcharts from 'echarts-for-react';
+import 'echarts-gl'
+import 'mapbox-echarts'
+import * as maptalks from 'maptalks'
+import { Select, Checkbox, Button } from 'antd';
+import PropTypes from 'prop-types';
+import axios from 'axios';
+import { url } from '../config';
+
+
+
+const { Option } = Select;
+
+var test_data = []
+
+var test_scatter = []
+var map = {
+    center: [100.6042, 13.9133],
+    zoom: 13,
+    altitudeScale: 1,
+    pitch: 45,
+    bearing: 15,
+    // baseLayer: new maptalks.TileLayer('base', {
+    //     // urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',   //อันเดิมสีขาว
+    //     urlTemplate: "https://stamen-tiles.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.png",
+    //     subdomains: ['a', 'b', 'c', 'd'],
+    //     attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
+    // }),
+
+    baseLayer: new maptalks.TileLayer('base', {
+        urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        subdomains: ['a', 'b', 'c'],
+        attribution: '&copy; OpenStreetMap contributors'
+    })
+}
+
+
+
+var test_poly = [
+    [100.6042, 13.9133], [100.6052, 13.9133], [100.6042, 13.9143], [100.6052, 13.9143]
+]
+
+
+var test_bar = [[100.505997, 14.007475, 0.01],
+[100.505997, 14.003475, 0.05],
+[100.505997, 13.999475, 0.10],
+[100.509997, 14.007475, 0.15],
+[100.509997, 14.003475, 0.20],
+[100.509997, 13.999475, 0.3],
+[100.513997, 14.007475, 0.5],
+[100.513997, 14.003475, 0.70],
+[100.513997, 13.999475, 1.00]
+]
+
+
+const My_test_map = (props) => {
+    const [data, setData] = useState([])
+    const [scatter, setScatter] = useState(test_scatter)
+    const [paramFlight, setParamFlight] = useState(props.flightsData)
+    const [gridData, setGridData] = useState([])
+    const [markerPoint, setMarkerPoint] = useState([[0, 0, 0]])
+
+
+    const SecToDate = (sec) => {
+        var dateFormat = new Date(1970, 0, 1);
+        dateFormat.setSeconds(sec + 25200);
+        // dateFormat.setSeconds(sec);
+        // console.log('sec date',dateFormat)
+
+        // dateFormat = `${dateFormat.getFullYear()}/${dateFormat.getMonth() + 1}/${dateFormat.getDate()}`
+        dateFormat = `${dateFormat.getDate()}/${dateFormat.getMonth() + 1}/${dateFormat.getFullYear()}`
+        return dateFormat;
+    }
+
+    const getOption = () => ({
+
+        maptalks3D: map,
+
+
+        visualMap: {
+            top: 10,
+            right: 10,
+            calculable: true,
+            realtime: false,
+            max: 100,
+            inRange: {
+                color: [
+                    '#1aa450',
+                    '#1aa450',
+                    '#45c03c',
+                    '#82d235',
+                    '#a7df40',
+                    '#cddd3e',
+                    '#dfd43e',
+                    '#e0b13f',
+                    '#e0a231',
+                    '#de8618',
+                    '#d46412',
+                    '#dc4413',
+                    '#de3a17',
+                    '#e02514',
+                    '#d01715',
+
+                    //colorset2
+                    // '#1aa450', //0
+                    // '#4ded2d', //15
+                    // '#aaed2d', //30
+                    // '#eded2d', //45
+                    // '#eda02d', //60
+                    // '#ed732d', //75
+                    // '#ed472d', //90
+
+                    //colorset3
+                    // '#1aa450', //0
+                    // '#4ded2d', //18
+                    // '#4ded2d', //36
+                    // '#4ded2d', //54
+                    // '#eda02d', //72
+                    // '#ed472d', //90
+                ]
+            }
+        },
+
+        series: [
+            {
+                type: 'scatter3D',
+                coordinateSystem: 'maptalks3D',
+                itemStyle: {
+                    color: '(255, 0, 0)',
+                    opacity: 1
+                },
+                data: scatter,
+                symbolSize: 1,
+                label: {
+                    show: true,
+                    itemStyle:{
+                        color: '(255, 0, 0)',
+                        
+                    },
+                    formatter: function (flight) {
+                        // console.log('flight',flight)
+                        return flight[3];
+                    },
+                    position: 'insideTop'
+                },
+            },
+            {
+                type: 'lines3D',
+                coordinateSystem: 'maptalks3D',
+                effect: {
+                    show: false,
+                    constantSpeed: 40,
+                    trailWidth: 2,
+                    trailLength: 0.05,
+                    trailOpacity: 1,
+                },
+                polyline: true,
+                lineStyle: {
+                    width: 2,
+                    color: 'rgb(50, 60, 170)',
+                    opacity: 0.5
+                },
+                data: data
+            },
+            {
+                type: 'bar3D',
+                coordinateSystem: 'maptalks3D',
+                data: gridData,
+                shading: 'color',
+                barSize: 1.49,
+                minHeight: 0,
+                maxHeight: 11,
+                label: {
+                    show: false,
+                    formatter: function (data) {
+                        return parseFloat(data.data[2]).toFixed(2);
+
+                    },
+                },
+                itemStyle: {
+                    opacity: 0.15
+                },
+                emphasis: {
+                    label: {
+                        opacity: 1,
+                        fontSize: 20,
+                        color: '#000000',
+                    },
+                    itemStyle: {
+                        color: '#000000'
+                    },
+                }
+            },
+            {
+                name: 'Custom Marker',
+                type: 'bar3D',
+                coordinateSystem: 'maptalks3D',
+                data: markerPoint,
+                shading: 'realistic',
+                barSize: 1.49,
+                label: {
+                    fontSize: 20,
+                    show: true,
+                    color: '#000000',
+                    formatter: function (data) {
+                        return parseFloat(data.data[2]).toFixed(2);
+                    }
+                },
+                itemStyle: {
+                    opacity: 1,
+                },
+                emphasis: {
+                    itemStyle: {
+                        // Color in emphasis state.
+                        color: 'thistle'
+                    }
+                }
+            }
+        ],
+    });
 
 
 
 
-// const { Option } = Select;
 
-// // var test_data = [{
-// //     name:'aa',
-// //     coords: [[100.5971, 13.8989, 700], [100.5837, 13.8755, 1700], [100.5572, 13.8620, 2400]],
-// //     date:'2022-10-04',
-// //     time_1:'17:23:06',
-// //     time_2:'17:24:10',
-// //     week:'1'
-// // },{
-// //     name:'aa',
-// //     coords: [[100.5971, 13.8989, 700], [100.5837, 13.8755, 1000], [100.5572, 13.8620, 2000]],
-// //     date:'2022-10-04',
-// //     time_1:'17:23:06',
-// //     time_2:'17:24:10',
-// //     week:'1'
-// // }]
+    const getData = (result) => {
+        // console.log('resulttttt', result)
+        setData([])
+        setScatter([])
+        for (const flight in result) {
+            let scatter_location = result[flight].value[5]
+            let scatter_name = result[flight].id
+            scatter_name = scatter_name.split("-")[0] + " - " + SecToDate(result[flight].date) + " - " + result[flight].D_or_A
+            let scatter_variable = [...scatter_location, scatter_name]
+            // variable = [long, lat, alt, name]
+            setScatter(previousState => [...previousState, scatter_variable])
+            // console.log('scatter', scatter_variable)
+            let itr_dict = {}
+            itr_dict['coords'] = result[flight].value
+            itr_dict['name'] = result[flight].id
+            setData(previousState => [...previousState, itr_dict])
+        }
+    }
 
-// var test_data = []
+    function toRadians(degrees) {
+        return degrees * Math.PI / 180;
+    }
 
-// var test_scatter = [[100.5971, 13.8989, 15, "AAA111"]]
-// // var test_scatter = [[100.5971, 13.8989, 15, ▄]]
+    function distance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // radius of the earth in km
+        const dLat = toRadians(lat2 - lat1);
+        const dLon = toRadians(lon2 - lon1);
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const d = R * c;
+        return d;
+    }
+    // const coords = [[13.895474999999992, 100.64999700000016], [13.935474999999988, 100.56599700000005]];
+    const coords = gridData;
 
-// // var test_radar = [[100.5971, 13.8989]]
-// var test_radar = [{
-//         name:'aa',
-//         coords: [[100.5971, 13.8989, 1], [100.5837, 13.8755, 1], [100.5572, 13.8620, 1], [100.5400, 13.8555, 1], [100.5971, 13.8989, 1]],
-//         date:'2022-10-04',
-//         time_1:'17:23:06',
-//         time_2:'17:24:10',
-//         week:'1'
-//     }]
+    function shortest_point() {
+        let minDistance = null;
+        let minCoord = null;
+        // console.log('lat long2', props.userLat, props.userLong)
+        if (props.userLat === null || props.userLat > 13.99 || props.userLat < 13.83 || props.userLong > 100.69 || props.userLong < 100.52) {
+            return [0, 0, 0]
+        }
+        let cor = [props.userLat, props.userLong];
 
-// var map = {
-//     center: [100.6042,13.9133], 
-//     zoom: 13,
-//     altitudeScale: 100,
-//     pitch: 45,
-//     bearing: 15,
-//     baseLayer: new maptalks.TileLayer('base', {
-//         urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-//         subdomains: ['a','b','c','d'],
-//         attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
-//     }),
-// }
+        for (let i = 0; i < gridData.length; i++) {
+            const coord = gridData[i];
+            const d = distance(cor[0], cor[1], coord[1], coord[0]);
+            if (minDistance === null || d < minDistance) {
+                minDistance = d;
+                minCoord = coord;
+            }
+        }
+        return minCoord;
+    }
 
-// const url = 'http://localhost:8000/';
 
-// class Map extends React.Component {
 
-//     constructor(props) {
-//         super(props);
-//         this.state = {
-//             data : test_data,
-//             checkedList: [],
-//             list: [],
-//             scatter: test_scatter,
-//             radar: test_radar
-//         };
-//         this.date = props.selectDate
-//         this.time = props.selectTime
-//         this.flight = props.data
-//         this.check = props.name
-//         this.what = props.what
+    useEffect(() => {
+        // console.log('lat long', props.userLat, props.userLong)
+        // console.log("marker", markerPoint);
 
-//         this.getData = this.getData.bind(this);
-//     }
+        if (props.userLong !== 0 && props.userLat !== 0) {
+            // console.log("marker", markerPoint);
+            let point_A = shortest_point();
 
-//     componentWillMount(){
-//         console.log('Date => ',this.state.date)
-//         if(this.what === "Flight no"){
-//             this.getData(this.flight)
-//         }
-//         // axios.get(url+'get_flight').then((response) => {
-//         //     console.log(response.data);
-//         //     test_data.push(response.data);
-//         //     this.getData(test_data)
-//         //   })
-//         //   .catch((error) => {
-//         //     console.log(error)
-//         //   });
-//         // axios.post(url+'get_flight',{
-//         //     'date': this.date
-//         // }).then((response) => {
-//         //     // console.log(response.data.res[0]['value']);
-//         //     test_data.push(response.data.res[0]['value']);
-//         //     this.getData(test_data)
-//         //     console.log(test_data)
-//         //   })
-//         //   .catch((error) => {
-//         //     console.log("error ->",error)
-//         //   });
+            // setMarkerPoint([[point_A[0], point_A[1], point_A[2]*10]])
+            setMarkerPoint([point_A])
+        }
+        else {
+            setMarkerPoint([[0, 0, 0]])
+        }
 
-//     }
 
-//     //---------- selected function-------------//
+    }, [props.userLong, props.userLat]);
 
-//     onhandleChange(value,data) {
-//         var data_select = []
-//         var data_scatter = []
-//         // var data_radar = []
-//         this.setState({checkedList : value})
-//         for(var j=0;j<value.length;j++){
-//             for(var i=0;i<data.length;i++){
-//                 if(data[i].name === value[j]){
-//                     var state = Math.floor((data[i].coords.length)/2)
-//                     data_select.push(data[i])
-//                     data_scatter.push([data[i].coords[state][0],data[i].coords[state][1],data[i].coords[state][2],data[i].name])
-//                 }
-//             }
-//         }
-//         this.setState({data : data_select,scatter:data_scatter})
-//     }
 
-//     getData(result){
-//         this.setState({data : result})
-//     }
 
-//     //-----------draw chart-------------//
+    useEffect(() => {
+        const fetchData = async () => {
+            // console.log('working....')
+            setParamFlight(props.flightsData)
+            const response = await axios.post(url + 'flight_path', {
+                'flights': props.flightsData,
+                'duration_day': props.durationDay,
+                'duration_night': props.durationNight
+            }).catch((error) => {
+                console.log("error ->", error)
+            });
+            setGridData(response.data.cumu_grid)
+            props.handleGridForExport(response.data.cumu_grid)
+            getData(response.data.res)
+            // console.log('response ', response.data);
+            // console.log('grid_nop:', gridData);
+        }
+        fetchData();
 
-//     getOption = () => ({
-//         maptalks3D: map, 
-//         series: [
-//             {
-//                 type: 'scatter3D',
-//                 coordinateSystem: 'maptalks3D',
-//                 itemStyle: {
-//                     color: '(255, 0, 0)',
-//                     opacity: 1
-//                 },
-//                 data: this.state.scatter,
-//                 symbolSize: 1,
-//                 label: {
-//                     show: true,
-//                     formatter: function (data) {
-//                         return data[3];
-//                     },
-//                     position: 'insideTop'
-//                 },
-//             },
-//             {
-//                 type: 'lines3D',
-//                 coordinateSystem: 'maptalks3D',
-//                 effect: {
-//                     show: false,
-//                     constantSpeed: 40,
-//                     trailWidth: 2,
-//                     trailLength: 0.05,
-//                     trailOpacity: 1,
-//                 },
-//                 polyline: true,
-//                 lineStyle: {
-//                     width: 2,
-//                     color: 'rgb(50, 60, 170)',
-//                     opacity: 0.5
-//                 },
-//                 data: this.state.data 
-//             },
-//             // {
-//             //     type: 'lines3D',
-//             //     coordinateSystem: 'maptalks3D',
-//             //     polyline: true,
-//             //     lineStyle: {
-//             //         width: 2,
-//             //         color: 'rgb(255, 0, 0)',
-//             //         opacity: 0.5
-//             //     },
-//             //     // pointSize: 5,
-//             //     // blurSize: 6,
-//             //     data: this.state.radar
-//             // }
-//         ],
-//     });
-  
-//     render(props) {
-//       return (
-        
-//         <div>
-//             <button onClick={() => (
-//             console.log(this.state.date)
-//             )}>
-//             log date
-//             </button>
-//             {this.what === "Date" ?
-//             <Select
-//                 mode="multiple"
-//                 style={{ width: '50%',marginBottom:'2%' }}
-//                 placeholder="Please select flight"
-//                 value={this.state.checkedList}
-//                 onChange={e => this.onhandleChange(e,this.flight)}
-//             >
-//                 {this.check.map(flight => (
-//                         <Option style={{ fontSize: "1rem" }} key={flight}>{flight}</Option>
-//                 ))}
-//             </Select>
-//             :
-//                 null
-//             }
-//                 <ReactEcharts option={this.getOption()} style={{width:'100%', height:800, border:'1px solid lightgray'}} />
-//         </div>
-//       );
-//     }
-//   }
+    }, [props.flightsData])
 
-//   Map.propTypes = {
-//     data: PropTypes.array,
-//     name: PropTypes.array,
-//     what: PropTypes.string
-//   };
-  
-//   export default Map;
+    useEffect(() => {
+        if (gridData.length !== 0) {
+            // console.log('show')
+            props.handleShowLatLong(1)
+        }
+        else {
+            // console.log('not show')
+            props.handleLatitudeChange(null)
+            props.handleLongitudeChange(null)
+            props.handleShowLatLong(0)
+        }
+    }, [gridData]);
+
+    return (
+        <div>
+            <ReactEcharts option={getOption()} notMerge={true}
+                lazyUpdate={true} style={{ width: '100%', height: 700, border: '1px solid lightgray' }} />
+
+
+        </div>
+    );
+
+}
+
+My_test_map.propTypes = {
+    data: PropTypes.array,
+    name: PropTypes.array,
+    what: PropTypes.string
+};
+
+export default My_test_map;

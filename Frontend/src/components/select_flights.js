@@ -5,7 +5,6 @@ import ToggleButton from 'react-bootstrap/ToggleButton';
 import ToggleButtonGroup from 'react-bootstrap/ToggleButtonGroup';
 import Form from 'react-bootstrap/Form';
 import axios from 'axios';
-// import datetime;
 import "./select_flights.css"
 
 
@@ -31,9 +30,8 @@ function Select_flights(props) {
     }
 
     const clickToSend = () => {
-        // console.log('ggggg',userLat)
+        // console.log('userLat2',userLat)
         if (userLat === undefined || userLong === undefined || userLat === '' || userLong === '') {
-            // console.log('aaaaaaaaaaaaaaaaa')
             props.handleLatitudeChange(0);
             props.handleLongitudeChange(0);
         }
@@ -57,11 +55,8 @@ function Select_flights(props) {
       }
 
     const flights = filterFlights.map((flight) =>
-        // <ToggleButton id={`tbg-btn-${flight['id']}`} value={flight['id']}>
                 <ToggleButton variant={flight['available_grid']===true? 'success':'warning'} class="test_color" id={`tbg-btn-${flight["id"]}`} value={flight["id"]}>
 
-            {/* {flight['id']} */}
-            {/* {flight['id'].split("-")[0]+" - "+SecToDate(flight['id'].split("-")[1])+" - "+flight['DA']} */}
             {flight['id'].split("-")[0] + " - " + SecToDate(flight['date']) + " - " + flight['D_or_A']}
         </ToggleButton>
     );
@@ -79,7 +74,6 @@ function Select_flights(props) {
                     <h3>Select Flights</h3>
                 </div>:null}
 
-                {/* <ToggleButtonGroup class="Flights" type="checkbox" value={value} onChange={handleChange} vertical={true}> */}
                 <ToggleButtonGroup class={flights.length >= 6 ?'Flight2':'Flight1'} value={value} onChange={handleChange} type="checkbox" vertical={true}>
                     {flights}
                 </ToggleButtonGroup >
@@ -94,17 +88,13 @@ function Select_flights(props) {
             </div>
 
             {props.showLatLong ? <div class="LeftAndRight">
-                {/* <Form.Group className="mb-3" controlId="formBasicLatitude"> */}
                 <Form.Group class="InLatLong" controlId="formBasicLatitude">
                     <Form.Label class="InLat">Latitude</Form.Label>
-                    {/* <Form.Control class="InputLat col-xs-4" type="text" placeholder="Enter Latitude" value={userLat} onChange={handleLatitudeChange}/> */}
                     <input class="InLat" type="text" placeholder="Enter Latitude" value={userLat} onChange={handleLatitudeChange}/>
                 </Form.Group>
 
-                {/* <Form.Group className="mb-3" controlId="formBasicLongitude"> */}
                 <Form.Group class="InLatLong" controlId="formBasicLongitude">
                     <Form.Label class="InLong">Longitude</Form.Label>
-                    {/* <Form.Control class="InLong" type="text" placeholder="Enter Longitude" value={userLong} onChange={handleLongitudeChange}/> */}
                     <input class="InLong" type="text" placeholder="Enter Longitude" value={userLong} onChange={handleLongitudeChange}/>
                 </Form.Group>
 
