@@ -80,41 +80,17 @@ db = firestore.client()
 
 def validate(date_text):
         try:
-            # print(date_text)
             test = datetime.datetime.strptime(date_text, '%Y-%m-%d %H:%M:%S')
-            # print(test.timestamp())
             return 0, test.timestamp()
-            # year, month, day = date_text.split('-')
-
-            # if len(day) == 1:
-            #     day = f'0{day}'
-            # if len(month) == 1:
-            #     month = f'0{month}'
-            # return 0, f'{year}-{month}-{day}'
         except ValueError:
             # raise ValueError("Incorrect data format, should be YYYY-MM-DD")
             return 1 ,"Incorrect data format, should be YYYY-MM-DD H:M:S"
 
 
 
-
-
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
-
-
-# @app.get("/get_flight")
-# def get_flight():
-
-#     return {
-#         "name" : "aa",
-#         "coords": df_sample_data[['longitude','latitude','altitude']].values.tolist(),
-#         "date" : "2022-10-04",
-#         "time_1" : '17:23:06',
-#         "time_2" : '23:24:10',
-#         "week" : '1'
-#         }
 
 
 @app.post("/get_flightaware")
@@ -217,9 +193,6 @@ async def create_date_range(date_range: DateRange):
                 # res = pd.concat([res, tmp_df.iloc[n]])
                 n+=1
             res = res.append(tmp_df.iloc[n])
-            # res = pd.concat([res, tmp_df.iloc[n]])
-            # print(res)
-            # return
             
             #----- interpolate 1 sec -----#
             res['timestamp'] = pd.to_datetime(res.timestamp)
@@ -291,173 +264,6 @@ async def create_date_range(date_range: DateRange):
     return {"res": Showflights}
 
 
-# @app.post('/get_flightaware')
-# def get_flightaware(item:date_flight):
-#     # format yyyy-mm-dd
-#     start = item.start
-#     end = item.end
-#     hour = item.time
-#     if len(start.split('-')) != 3 or len(end.split('-')) != 3 :
-#         return {'response': 'please check your format yyyy-mm-dd', 'status_code': 400}
-    
-#     Airport_id = 'DMK'
-#     Airport_start = f'{start}T{hour}%3A00%3A00Z'
-#     Airport_end = f'{end}T{hour}%3A00%3A00Z'
-    
-#     #----- get flight data from DMK airport -----#
-#     response = requests.get(apiUrl + f"airports/{Airport_id}/flights?start={Airport_start}&end={Airport_end}",
-#     headers=auth_header)
-
-#     Arrivals_FlightID = []
-#     Departures_FlightID = []
-    
-#     #----- add flight data from DMK airport -----#
-#     for i in response.json()['arrivals']:
-#         if 'schedule' in i['fa_flight_id']:
-#             Arrivals_FlightID.append(i['fa_flight_id'])
-#             # break
-        
-#     for i in response.json()['departures']:
-#         if 'schedule' in i['fa_flight_id']:
-#             Departures_FlightID.append(i['fa_flight_id'])
-#             # break
-        
-#     #----- get data from flight ID -----#
-#     Dict_departures_flights = {
-#         'day':{},
-#         'night':{}
-#     }
-
-#     # i = 1
-#     for id in Departures_FlightID:
-#         response = requests.get(apiUrl + f"flights/{id}/track",
-#         headers=auth_header)
-
-#         if response.status_code == 200:
-#             # print(i)
-#             #----- Add data to dict -----#
-#             tmp_df = pd.DataFrame.from_dict(response.json()['positions'])
-            
-#             #----- check time -----#
-#             tmp_df = tmp_df.drop_duplicates(subset=['timestamp'], keep='first')
-            
-#             #----- altitude <= 100k ft. & index[1]-index[0]==1 -----#
-#             tmp_df = tmp_df[tmp_df['altitude']<=100]
-#             tmp_df['check_index_1'] = tmp_df.index
-#             tmp_df['check_index_2'] = tmp_df['check_index_1'].shift(-1)
-#             tmp_df['drop'] = tmp_df['check_index_2']-tmp_df['check_index_1'] == 1
-            
-#             #----- loop append only Departures -----#
-#             res = pd.DataFrame()
-#             n = 0
-#             while(tmp_df.iloc[n]['drop']) :
-#                 res = res.append(tmp_df.iloc[n])
-#                 # res = pd.concat([res, tmp_df.iloc[n]])
-#                 n+=1
-#             res = res.append(tmp_df.iloc[n])
-#             # res = pd.concat([res, tmp_df.iloc[n]])
-            
-#             #----- interpolate 1 sec -----#
-#             res['timestamp'] = pd.to_datetime(res.timestamp)
-#             nidx = np.arange(res['timestamp'][0], res['timestamp'].iloc[-1], 1000000 )
-#             nidx = pd.to_datetime(nidx)
-
-#             res['timestamp'] = res['timestamp'].round('S').dt.tz_localize(None)
-#             res.set_index('timestamp', inplace=True)
-#             res = res.reindex(res.index.union(nidx))
-
-#             #----- interpolate ['altitude', 'groundspeed', 'heading', 'latitude', 'longitude'] -----#
-#             res = res[['fa_flight_id', 'altitude', 'groundspeed', 'heading', 'latitude', 'longitude']]
-#             res['altitude'] = pd.to_numeric(res['altitude'])
-#             res['groundspeed'] = pd.to_numeric(res['groundspeed'])
-#             res['heading'] = pd.to_numeric(res['heading'])
-#             res = res.interpolate(method='time',limit_direction='both',limit=100)
-#             res['fa_flight_id'] = id
-            
-#             #----- ONLY TEST -----#
-#             # res.to_csv(f'../Preprocess/ONLY_TEST/{id}.csv')
-            
-#             #----- check day/night -----#
-#             if res.iloc[:1].between_time('07:00', '23:00').empty :
-#                 # print(id,' night ', res.iloc[0])
-#                 Dict_departures_flights['night'][id] = res.copy()
-#                 Dict_departures_flights['night'][id].reset_index(inplace=True)
-#                 Dict_departures_flights['night'][id].rename(columns={'index':'timestamp'},inplace=True)
-#             else :
-#                 # print(id,' day ', res.iloc[0])
-#                 Dict_departures_flights['day'][id] = res.copy()
-#                 Dict_departures_flights['day'][id].reset_index(inplace=True)
-#                 Dict_departures_flights['day'][id].rename(columns={'index':'timestamp'},inplace=True)
-                
-#         else:
-#             print("Error executing request")
-            
-#         # i+=1
-#         time.sleep(10)
-        
-        
-
-#     for day_night in Dict_departures_flights:
-#         for flight in Dict_departures_flights[day_night]:
-#             # print(day_night, flight)
-#             postdata = Dict_departures_flights[day_night][flight]
-#             date_index = postdata.iloc[0].timestamp.date()
-
-#             # doc_ref = db.collection(f'{start}').document(f'{day_night}').collection(f'{flight}')
-#             doc_ref = db.collection(f'{date_index}').document(f'{day_night}').collection(f'{flight}')
-#             print('docref success')
-#             postdata = postdata.to_dict('records')
-#             list(map(lambda x: doc_ref.add(x), postdata))
-#             print('insert success')
-
-#     return {"response": f'Insert successful','status_code':200}
-
-
-# @app.post('/get_flight')
-# def get_flight(item:api_flightID):
-
-#     date_check, param_date = validate(item.date)
-#     if date_check:
-#         return {'response': param_date}
-#     period = None
-#     if item.period in ['day','night']:
-#         period = item.period
-#     # print(param_date+3600)
-#     # doc_ref = db.collection('filter_flight').where('period','==',period).where('date','==',param_date).limit(3)
-#     doc_ref = db.collection('filter_flight').where('date','>=',param_date).where('date','<',param_date+10800).limit(3)
-#     docs = list(doc_ref.stream())
-#     flight_dict = list(map(lambda x: x.to_dict(), docs))
-#     # df = pd.DataFrame(flight_dict)
-#     # print(df)
-#     # print(flight_dict)
-
-#     if item.flight_id:
-#         doc_ref2 = db.collection('detail_and_grid').document('detail').collection(f'{item.flight_id}').order_by('timestamp')
-#         docs = list(doc_ref2.stream())
-#         flight_dict = list(map(lambda x: x.to_dict(), docs))
-#         df = pd.DataFrame(flight_dict)
-#         # print(df)
-#         # print()
-#     else:
-#         res_list = []
-#         for doc in flight_dict:
-#             # print(doc['id'])
-#             id = doc['id']
-#             doc_ref2 = db.collection('detail_and_grid').document('detail').collection(f'{id}').order_by('timestamp')
-#             docs = list(doc_ref2.stream())
-#             flight_dict = list(map(lambda x: x.to_dict(), docs))
-#             df = pd.DataFrame(flight_dict)
-#             df = df[['longitude','latitude','altitude']].values.tolist()
-#             # print(df)
-#             tmp_dict ={
-#                 'id':id,
-#                 'value':df
-#             }
-#             res_list.append(tmp_dict)
-#             # print()
-#             # break
-#     # print(res_list)
-#     return {'response':'success','res':res_list}
 
 @app.post('/filter_flight')
 def filter_flight(item:api_flightID):
@@ -477,12 +283,6 @@ def filter_flight(item:api_flightID):
 
 @app.post('/grid_to_firebase')
 def grid2firebase(date:generate_grid_api):
-    # date_object = datetime.datetime.strptime(date.date, '%Y-%m-%d')
-    # timestart = date_object.timestamp()
-    # timeEnd = (date_object + datetime.timedelta(days=1) ).timestamp()
-    # doc_ref = db.collection('filter_flight').where('date','>=',timestart).where('date','<',timeEnd)
-    # docs = list(doc_ref.stream())
-    # flight_dict = list(map(lambda x: x.to_dict(), docs))
 
     flight_dict = [{'id':'AIQ3102-1670715240-schedule-0556'},{'id':'AIQ311-1670716320-schedule-0614'},{'id':'AIQ3029-1670715240-schedule-0553'}]
     # {'id':'AIQ3029-167075240-schedule-0553'},
@@ -534,12 +334,6 @@ def web_cal_grid(flight_dict:List[str]):
         'succuss':[]
     }
     for name in flight_dict:
-        # test_doc = db.collection('filter_flight').document(name).get()
-        # if test_doc.exists:
-        #     print('Document exists',name)
-        # else:
-        #     print('Document does not exist',name)
-        #     return
         print(name)
         doc_ref2 = db.collection('detail_and_grid').document('grid').collection(f'{name}')
         check_exist = doc_ref2.limit(1).stream()
@@ -577,10 +371,6 @@ def web_cal_grid(flight_dict:List[str]):
 
 @app.post('/flight_path')
 def flight_path(item:list_flight):
-    # print(item.duration_day, item.duration_night)
-    # for i in item.flights:
-    #     print(i)
-    
     size = 40
     flight_list = item.flights
     res_list = []
@@ -678,51 +468,8 @@ def flight_path(item:list_flight):
             target_list.append(input_val)
             
     
-    # for index, row in df_cumu[list(df_cumu.keys())[0]].iterrows():
-    #     LDN = 0
-    #     for long in  df_cumu[list(df_cumu.keys())[0]].columns:
-    #         for key in df_cumu.keys():
-    #             LDN += LDN + Cumulative_model(df_cumu[key]['period'], df_cumu[key]['grid'].loc[index, long])
-    #         cumu_value.loc[index,long] = LDN
-
-        
-    # return {'response':'success','res':res_list}
     return {'response':'success','res':res_list, 'cumu_grid':cumu_grid}
 
-# @app.get('/csv_2_db')
-# def csv_2_db():
-#     path = '../Preprocess/ONLY_TEST/'
-#     csv_files = glob.glob(os.path.join(path, "*.csv"))
-#     for f in csv_files:
-#         # print(f)
-#         df = pd.read_csv(f)
-#         df['timestamp'] = pd.to_datetime(df.timestamp)
-#         date_index = df.iloc[0].timestamp.date()
-#         if df.set_index('timestamp').iloc[:1].between_time('00:00', '16:00').empty :
-#             period = 'night'
-#         else: period = 'day'
-#         id = df.iloc[0].fa_flight_id
-#         # print(id, period, date_index)
-
-#         check_docs = db.collection('filter_flight').where('id','==',f'{id}')
-#         check_exist = check_docs.get()
-#         # print(check_exist)
-#         if check_exist != []:
-#             continue
-#         else:
-#             print('not found', id)
-#             # print(int(df.iloc[0].timestamp.floor(freq='H').timestamp()))
-#             doc_ref = db.collection(f'filter_flight').document(f'{id}')
-#             doc_ref2 = db.collection(f'detail_and_grid').document(u'detail').collection(f'{id}')
-#             doc_ref.set({
-#                 'date': int(df.iloc[0].timestamp.floor(freq='H').timestamp()),
-#                 'id':id,
-#                 'period':period
-#             })
-#             postdata = df.to_dict('records')
-#             list(map(lambda x: doc_ref2.add(x), postdata))
-#             print('insert success', id)
-#     return {'response':'success'}
 
 
 def get_feet(distance):
@@ -755,32 +502,6 @@ def check_noise_model():
 
 
 
-
-# @app.get('/test_get_grid')
-# def test_get_grid():
-#     path = '../Preprocess/grid_flights/'
-#     csv_files = glob.glob(os.path.join(path, "*.csv"))
-#     for f in csv_files:
-#         df = pd.read_csv(f)
-#         # print(df)
-#         if os.name == 'nt':
-#             filename = f.split('\\')[1]
-#         else:
-#             filename = f.split('/')[2]
-        
-#         flight_id = filename[:-4]
-#         doc_ref = db.collection('detail_and_grid').document('grid').collection(f'{flight_id}').order_by('Lat',direction=firestore.Query.DESCENDING)
-#         docs = list(doc_ref.stream())
-#         flight_dict = list(map(lambda x: x.to_dict(), docs))
-#         df = pd.DataFrame(flight_dict)
-#         df.set_index('Lat',inplace=True)
-#         col = list(df.columns)
-#         col.sort()
-#         df = df[col]
-#         print(df)
-#         break
-
-#     return
 
 
 # uvicorn main:app --reload
