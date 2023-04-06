@@ -71,8 +71,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+firebase_creds_json = os.environ.get('FIREBASE_CREDS')
 
-cred = credentials.Certificate('serviceAccount.json')
+cred = credentials.Certificate(json.loads(firebase_creds_json))
+# cred = credentials.Certificate('serviceAccount.json')
 app_firebase = firebase_admin.initialize_app(cred)
 db = firestore.client()
 # doc_ref = db.collection(u'dd-mm-yy').document(u'Day').collection(u'flight_ID')
