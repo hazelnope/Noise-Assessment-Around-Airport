@@ -38,16 +38,6 @@ size = 40
 
 
 
-#----- read fix_point to get power setting -----#
-# df_fix_point = pd.read_csv('./../Preprocess/data/ANP2.2_Default_fixed_point_profiles.csv',delimiter=';', skiprows=[0])
-# df_fix_point = pd.read_csv('./../Preprocess/data/ANP2.2_Default_fixed_point_profiles.csv',delimiter=';')
-
-# df_fix_point = df_fix_point[df_fix_point['Stage Length'] == 1]
-# df_fix_point = df_fix_point[df_fix_point['Op Type'] == "D"]
-
-#----- read NPD to get L(dB) by [power setting - distance]-----#
-# npd = pd.read_csv('./../Preprocess/data/ANP2.2_NPD_data.csv',delimiter=';', skiprows=[0])
-
 
 
 

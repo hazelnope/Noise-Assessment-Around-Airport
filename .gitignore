@@ -1,32 +1,8 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/Frontend/node_modules
-/Frontend/.pnp
-.pnp.js
+/__pycache__
+/function_backend/__pycache__
+/key_value/__pycache__
+/.ipynb_checkpoints
+/noise-assessment-firebase-adminsdk-zwyak-47c438c242.json
+/serviceAccount.json
 
-# testing
-/Frontend/coverage
-
-# production
-/Frontend/build
-
-# misc
-.DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# add cache
-/Backend/__pycache__
-/Backend/function_backend/__pycache__
-/Backend/key_value/__pycache__
-/Backend/.ipynb_checkpoints
-/Backend/noise-assessment-firebase-adminsdk-zwyak-47c438c242.json
-/Backend/serviceAccount.json
-/Preprocess/.ipynb_checkpoints

@@ -71,7 +71,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-df_sample_data = pd.read_csv('../Preprocess/data/Sample_data2.csv')
 
 cred = credentials.Certificate('serviceAccount.json')
 app_firebase = firebase_admin.initialize_app(cred)
@@ -217,8 +216,7 @@ async def create_date_range(date_range: DateRange):
             res = res.interpolate(method='time',limit_direction='both',limit=100)
             res['fa_flight_id'] = id
             
-            #----- ONLY TEST -----#
-            # res.to_csv(f'../Preprocess/ONLY_TEST/{id}.csv')
+
             
             #----- check day/night -----#
             if res.iloc[:1].between_time('00:00', '16:00').empty :
