@@ -81,7 +81,7 @@ function API_to_DB(props) {
     }).catch((error) => {
       console.log("error ->", error)
     }).then((response) => {
-      // console.log(response.data.res),
+      console.log(response.data.res);
       afterAxios(response.data.res);
       // console.log(`myFunction took ${duration} seconds to run.`);
     }
@@ -153,7 +153,7 @@ function API_to_DB(props) {
       // 2022-12-13 06:00:00
       'date': `${startDateGrids} ${timeGridsAxios}:00:00`
     }).then((response) => {
-      // console.log('get flights for cal grids', response.data.res)
+      console.log('get flights for cal grids', response.data.res)
       afterAxiosGrids(response.data.res)
     })
   }
